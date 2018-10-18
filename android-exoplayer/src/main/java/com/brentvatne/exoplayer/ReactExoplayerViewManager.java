@@ -13,6 +13,7 @@ import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.upstream.RawResourceDataSource;
+import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class ReactExoplayerViewManager
   private static final String REACT_CLASS = "RCTVideo";
 
   private static final String PROP_SRC = "src";
+  private static final String PROP_AUDIO_SRC = "audioSrc";
   private static final String PROP_SRC_URI = "uri";
   private static final String PROP_SRC_TYPE = "type";
   private static final String PROP_SRC_HEADERS = "requestHeaders";
@@ -128,6 +130,34 @@ public class ReactExoplayerViewManager
           videoView.setRawSrc(srcUri, extension);
         }
       }
+    }
+  }
+
+  @ReactProp(name = PROP_AUDIO_SRC)
+  public void setAudioSrc(final ReactExoplayerView videoView,
+                          @Nullable ReadableMap src) {
+    Context context = videoView.getContext().getApplicationContext();
+    String uriString =
+        src.hasKey(PROP_SRC_URI) ? src.getString(PROP_SRC_URI) : null;
+    String extension =
+        src.hasKey(PROP_SRC_TYPE) ? src.getString(PROP_SRC_TYPE) : null;
+    Map<String, String> headers =
+        src.hasKey(PROP_SRC_HEADERS) ? toStringMap(src.getMap(PROP_SRC_HEADERS))
+                                     : null;
+
+    if (TextUtils.isEmpty(uriString)) {
+      return;
+    }
+
+    if (startsWithValidScheme(uriString)) {
+      Uri srcUri = Uri.parse(uriString);
+
+      if (srcUri != null) {
+        videoView.setAudioSrc(srcUri, extension, headers);
+      }
+    } else {
+      Log.e("ReactExoPlayerViewManager",
+            "Video audio - from asset not supported, go for it");
     }
   }
 

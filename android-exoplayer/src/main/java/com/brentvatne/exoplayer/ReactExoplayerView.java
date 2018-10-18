@@ -119,6 +119,8 @@ class ReactExoplayerView extends FrameLayout
   // Props from React
   private Uri srcUri;
   private String extension;
+  private Uri audioSrcUri;
+  private String audioExtension;
   private boolean repeat;
   private String audioTrackType;
   private Dynamic audioTrackValue;
@@ -265,7 +267,19 @@ class ReactExoplayerView extends FrameLayout
       MediaSource videoSource = buildMediaSource(srcUri, extension);
       MediaSource mediaSource;
       if (mediaSourceList.size() == 0) {
-        mediaSource = videoSource;
+
+        // Our merge-video-and-audio hack
+        if (audioSrcUri != null) {
+          // Gotta merge them both
+          MediaSource audioSource =
+              buildMediaSource(audioSrcUri, audioExtension);
+          MediaSource[] mergeCollection = {videoSource, audioSource};
+          mediaSource = new MergingMediaSource(mergeCollection);
+        } else {
+          // default behaviour
+          mediaSource = videoSource;
+        }
+
       } else {
         mediaSourceList.add(0, videoSource);
         MediaSource[] textSourceArray =
@@ -737,6 +751,25 @@ class ReactExoplayerView extends FrameLayout
       this.requestHeaders = headers;
       this.mediaDataSourceFactory = DataSourceUtil.getDefaultDataSourceFactory(
           this.themedReactContext, BANDWIDTH_METER, this.requestHeaders);
+
+      if (!isOriginalSourceNull && !isSourceEqual) {
+        reloadSource();
+      }
+    }
+  }
+
+  public void setAudioSrc(final Uri uri, final String extension,
+                          Map<String, String> headers) {
+    if (uri != null) {
+      boolean isOriginalSourceNull = audioSrcUri == null;
+      boolean isSourceEqual = uri.equals(audioSrcUri);
+
+      this.audioSrcUri = uri;
+      this.audioExtension = extension;
+      // this.requestHeaders = headers;
+      // this.mediaDataSourceFactory =
+      // DataSourceUtil.getDefaultDataSourceFactory(
+      //     this.themedReactContext, BANDWIDTH_METER, this.requestHeaders);
 
       if (!isOriginalSourceNull && !isSourceEqual) {
         reloadSource();
