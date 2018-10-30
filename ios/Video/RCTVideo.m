@@ -577,16 +577,17 @@ static int const RCTVideoUnset = -1;
 
     _assetLoader = [[AssetLoaderDelegate alloc] init];
     _assetLoader.fileUrl = uri; // S3 url in this case
-    AVURLAsset *asset =
-        [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
-                            //        URLAssetWithURL:[self url:url
-                            //        WithCustomScheme:@"pixi"]
-                            options:nil];
-    [asset.resourceLoader setDelegate:_assetLoader
-                                queue:dispatch_get_main_queue()];
+//      AVURLAsset *asset =
+//      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
+//       //        URLAssetWithURL:[self url:url
+//       //        WithCustomScheme:@"pixi"]
+//                          options:nil];
+//      [asset.resourceLoader setDelegate:_assetLoader
+//                                  queue:dispatch_get_main_queue()];
       
-      
-      
+      AVURLAsset *asset =
+      [AVURLAsset URLAssetWithURL:url
+                          options:nil];
       
       
       // AUDIO SOURCE BEGIN
@@ -594,8 +595,8 @@ static int const RCTVideoUnset = -1;
       
       
       // sideload text tracks
-//      AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
-//      
+      AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
+
 //      AVAssetTrack *videoAsset =
 //      [asset tracksWithMediaType:AVMediaTypeVideo].firstObject;
 //      AVMutableCompositionTrack *videoCompTrack = [mixComposition
