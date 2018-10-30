@@ -535,6 +535,7 @@ static int const RCTVideoUnset = -1;
   bool isNetwork = [RCTConvert BOOL:[source objectForKey:@"isNetwork"]];
   bool isAsset = [RCTConvert BOOL:[source objectForKey:@"isAsset"]];
   NSString *uri = [source objectForKey:@"uri"];
+  uri = @"http://192.168.2.228:8987/piss.mp4";
   NSString *type = [source objectForKey:@"type"];
 
   NSURL *url =
@@ -574,97 +575,113 @@ static int const RCTVideoUnset = -1;
       return;
     }
 #endif
-
+#if 0
     _assetLoader = [[AssetLoaderDelegate alloc] init];
     _assetLoader.fileUrl = uri; // S3 url in this case
-//      AVURLAsset *asset =
-//      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
-//       //        URLAssetWithURL:[self url:url
-//       //        WithCustomScheme:@"pixi"]
-//                          options:nil];
-//      [asset.resourceLoader setDelegate:_assetLoader
-//                                  queue:dispatch_get_main_queue()];
-      
-      AVURLAsset *asset =
-      [AVURLAsset URLAssetWithURL:url
-                          options:nil];
-      
-      
-      // AUDIO SOURCE BEGIN
-      
-      
-      
-      // sideload text tracks
-      AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
 
-//      AVAssetTrack *videoAsset =
-//      [asset tracksWithMediaType:AVMediaTypeVideo].firstObject;
-//      AVMutableCompositionTrack *videoCompTrack = [mixComposition
-//                                                   addMutableTrackWithMediaType:AVMediaTypeVideo
-//                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
-//      [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
-//                                                      videoAsset.timeRange.duration)
-//                              ofTrack:videoAsset
-//                               atTime:kCMTimeZero
-//                                error:nil];
-      
-//      AVAssetTrack *audioAsset =
-//      [asset tracksWithMediaType:AVMediaTypeAudio].firstObject;
-//      AVMutableCompositionTrack *audioCompTrack = [mixComposition
-//                                                   addMutableTrackWithMediaType:AVMediaTypeAudio
-//                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
-//      [audioCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
-//                                                      videoAsset.timeRange.duration)
-//                              ofTrack:audioAsset
-//                               atTime:kCMTimeZero
-//                                error:nil];
-      
-      
-      
-      
-      
-//      NSDictionary *urlAssetOptions = @{AVURLAssetPreferPreciseDurationAndTimingKey: [NSNumber numberWithBool:NO]};
-//
-//      AVMutableComposition *composition = [AVMutableComposition composition];
-//
-//
-////      NSLog(@"CHICKEN URL:%@",[audio objectForKey:@"uri"]);
-////      NSURL *audioUrl = [NSURL URLWithString:[audio objectForKey:@"uri"]];
-////      AVURLAsset *audioAsset = [AVURLAsset URLAssetWithURL:audioUrl options:urlAssetOptions];
-////
-////      AVMutableCompositionTrack *audioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
-////      [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, audioAsset.duration) ofTrack:[[audioAsset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0] atTime:kCMTimeZero error:nil];
-//
-//
-////      NSURL *videoUrl = [NSURL URLWithString:@"http://..."];
-////      AVURLAsset *videoAsset = [AVURLAsset URLAssetWithURL:videoUrl options:urlAssetOptions];
-//
-//      AVMutableCompositionTrack *videoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
-//      [videoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.timeRangeduration) ofTrack:[[videoAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0] atTime:kCMTimeZero error:nil];
-//
-//      AVMutableCompositionTrack *videoCompTrack = [mixComposition
-//                                                   addMutableTrackWithMediaType:AVMediaTypeVideo
-//                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
-//      [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
-//                                                      videoAsset.timeRange.duration)
-//                              ofTrack:videoAsset
-//                               atTime:kCMTimeZero
-//                                error:nil];
-//
-//
-      
-//      AVPlayerItem *playerItem = [AVPlayerItem playerItemWithAsset:composition];
-      
-                         // AUDIO SOURCE END
+    NSDictionary *options2 =
+        @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
-      
+    AVURLAsset *asset =
+        [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
+                            //        URLAssetWithURL:[self url:url
+                            //        WithCustomScheme:@"pixi"]
+                            options:options2];
+    [asset.resourceLoader setDelegate:_assetLoader
+                                queue:dispatch_get_main_queue()];
+
+#else
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
+#endif
+
+#define DO_MIX_COMPOSITION 0
+// AUDIO SOURCE BEGIN
+
+// sideload text tracks
+#if (DO_MIX_COMPOSITION)
+    AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
+
+    AVAssetTrack *videoAsset =
+        [asset tracksWithMediaType:AVMediaTypeVideo].firstObject;
+    AVMutableCompositionTrack *videoCompTrack = [mixComposition
+        addMutableTrackWithMediaType:AVMediaTypeVideo
+                    preferredTrackID:kCMPersistentTrackID_Invalid];
+    [videoCompTrack
+        insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+                                        videoAsset.timeRange.duration)
+                ofTrack:videoAsset
+                 atTime:kCMTimeZero
+                  error:nil];
+#endif
+    //      AVAssetTrack *audioAsset =
+    //      [asset tracksWithMediaType:AVMediaTypeAudio].firstObject;
+    //      AVMutableCompositionTrack *audioCompTrack = [mixComposition
+    //                                                   addMutableTrackWithMediaType:AVMediaTypeAudio
+    //                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
+    //      [audioCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+    //                                                      videoAsset.timeRange.duration)
+    //                              ofTrack:audioAsset
+    //                               atTime:kCMTimeZero
+    //                                error:nil];
+
+    //      NSDictionary *urlAssetOptions =
+    //      @{AVURLAssetPreferPreciseDurationAndTimingKey: [NSNumber
+    //      numberWithBool:NO]};
+    //
+    //      AVMutableComposition *composition = [AVMutableComposition
+    //      composition];
+    //
+    //
+    ////      NSLog(@"CHICKEN URL:%@",[audio objectForKey:@"uri"]);
+    ////      NSURL *audioUrl = [NSURL URLWithString:[audio
+    /// objectForKey:@"uri"]]; /      AVURLAsset *audioAsset = [AVURLAsset
+    /// URLAssetWithURL:audioUrl options:urlAssetOptions];
+    ////
+    ////      AVMutableCompositionTrack *audioTrack = [composition
+    /// addMutableTrackWithMediaType:AVMediaTypeAudio
+    /// preferredTrackID:kCMPersistentTrackID_Invalid]; /      [audioTrack
+    /// insertTimeRange:CMTimeRangeMake(kCMTimeZero, audioAsset.duration)
+    /// ofTrack:[[audioAsset tracksWithMediaType:AVMediaTypeAudio]
+    /// objectAtIndex:0] atTime:kCMTimeZero error:nil];
+    //
+    //
+    ////      NSURL *videoUrl = [NSURL URLWithString:@"http://..."];
+    ////      AVURLAsset *videoAsset = [AVURLAsset URLAssetWithURL:videoUrl
+    /// options:urlAssetOptions];
+    //
+    //      AVMutableCompositionTrack *videoTrack = [composition
+    //      addMutableTrackWithMediaType:AVMediaTypeVideo
+    //      preferredTrackID:kCMPersistentTrackID_Invalid]; [videoTrack
+    //      insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+    //      videoAsset.timeRangeduration) ofTrack:[[videoAsset
+    //      tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0]
+    //      atTime:kCMTimeZero error:nil];
+    //
+    //      AVMutableCompositionTrack *videoCompTrack = [mixComposition
+    //                                                   addMutableTrackWithMediaType:AVMediaTypeVideo
+    //                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
+    //      [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+    //                                                      videoAsset.timeRange.duration)
+    //                              ofTrack:videoAsset
+    //                               atTime:kCMTimeZero
+    //                                error:nil];
+    //
+    //
+
+    //      AVPlayerItem *playerItem = [AVPlayerItem
+    //      playerItemWithAsset:composition];
+
+    // AUDIO SOURCE END
 
     // [self playerItemPrepareText:asset
     //                assetOptions:assetOptions
     //                withCallback:handler];
-      
-//      handler([AVPlayerItem playerItemWithAsset:mixComposition]);
-      handler([AVPlayerItem playerItemWithAsset:asset]);
+
+#if (DO_MIX_COMPOSITION)
+    handler([AVPlayerItem playerItemWithAsset:mixComposition]);
+#else
+    handler([AVPlayerItem playerItemWithAsset:asset]);
+#endif
     return;
   } else if (isAsset) {
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
