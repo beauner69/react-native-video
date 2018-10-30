@@ -1,7 +1,7 @@
 #import "RCTVideoManager.h"
 #import "RCTVideo.h"
-#import <React/RCTBridge.h>
 #import <AVFoundation/AVFoundation.h>
+#import <React/RCTBridge.h>
 
 @implementation RCTVideoManager
 
@@ -9,14 +9,12 @@ RCT_EXPORT_MODULE();
 
 @synthesize bridge = _bridge;
 
-- (UIView *)view
-{
+- (UIView *)view {
   return [[RCTVideo alloc] initWithEventDispatcher:self.bridge.eventDispatcher];
 }
 
-- (dispatch_queue_t)methodQueue
-{
-    return dispatch_get_main_queue();
+- (dispatch_queue_t)methodQueue {
+  return dispatch_get_main_queue();
 }
 
 RCT_EXPORT_VIEW_PROPERTY(src, NSDictionary);
@@ -39,7 +37,8 @@ RCT_EXPORT_VIEW_PROPERTY(currentTime, float);
 RCT_EXPORT_VIEW_PROPERTY(fullscreen, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(fullscreenOrientation, NSString);
 RCT_EXPORT_VIEW_PROPERTY(progressUpdateInterval, float);
-/* Should support: onLoadStart, onLoad, and onError to stay consistent with Image */
+/* Should support: onLoadStart, onLoad, and onError to stay consistent with
+ * Image */
 RCT_EXPORT_VIEW_PROPERTY(onVideoLoadStart, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoLoad, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoBuffer, RCTBubblingEventBlock);
@@ -49,29 +48,31 @@ RCT_EXPORT_VIEW_PROPERTY(onVideoSeek, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoEnd, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onTimedMetadata, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoAudioBecomingNoisy, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerWillPresent, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerDidPresent, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerWillDismiss, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerDidDismiss, RCTBubblingEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerWillPresent,
+                         RCTBubblingEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerDidPresent,
+                         RCTBubblingEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerWillDismiss,
+                         RCTBubblingEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoFullscreenPlayerDidDismiss,
+                         RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onReadyForDisplay, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onPlaybackStalled, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onPlaybackResume, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onPlaybackRateChange, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoExternalPlaybackChange, RCTBubblingEventBlock);
 
-- (NSDictionary *)constantsToExport
-{
+- (NSDictionary *)constantsToExport {
   return @{
-    @"ScaleNone": AVLayerVideoGravityResizeAspect,
-    @"ScaleToFill": AVLayerVideoGravityResize,
-    @"ScaleAspectFit": AVLayerVideoGravityResizeAspect,
-    @"ScaleAspectFill": AVLayerVideoGravityResizeAspectFill
+    @"ScaleNone" : AVLayerVideoGravityResizeAspect,
+    @"ScaleToFill" : AVLayerVideoGravityResize,
+    @"ScaleAspectFit" : AVLayerVideoGravityResizeAspect,
+    @"ScaleAspectFill" : AVLayerVideoGravityResizeAspectFill
   };
 }
 
-+ (BOOL)requiresMainQueueSetup
-{
-    return YES;
++ (BOOL)requiresMainQueueSetup {
+  return YES;
 }
 
 @end

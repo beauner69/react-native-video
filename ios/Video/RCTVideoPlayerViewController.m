@@ -7,14 +7,14 @@
 @implementation RCTVideoPlayerViewController
 
 - (BOOL)shouldAutorotate {
-  if (self.preferredOrientation.lowercaseString == nil || [self.preferredOrientation.lowercaseString isEqualToString:@"all"])
+  if (self.preferredOrientation.lowercaseString == nil ||
+      [self.preferredOrientation.lowercaseString isEqualToString:@"all"])
     return YES;
-  
+
   return NO;
 }
 
-- (void)viewDidDisappear:(BOOL)animated
-{
+- (void)viewDidDisappear:(BOOL)animated {
   [super viewDidDisappear:animated];
   [_rctDelegate videoPlayerViewControllerWillDismiss:self];
   [_rctDelegate videoPlayerViewControllerDidDismiss:self];
@@ -26,14 +26,15 @@
 }
 
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
-  if ([self.preferredOrientation.lowercaseString isEqualToString:@"landscape"]) {
+  if ([self.preferredOrientation.lowercaseString
+          isEqualToString:@"landscape"]) {
     return UIInterfaceOrientationLandscapeRight;
-  }
-  else if ([self.preferredOrientation.lowercaseString isEqualToString:@"portrait"]) {
+  } else if ([self.preferredOrientation.lowercaseString
+                 isEqualToString:@"portrait"]) {
     return UIInterfaceOrientationPortrait;
-  }
-  else { // default case
-    UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+  } else { // default case
+    UIInterfaceOrientation orientation =
+        [UIApplication sharedApplication].statusBarOrientation;
     return orientation;
   }
 }
