@@ -1,4 +1,5 @@
 #import "RCTVideo.h"
+#import "AssetLoaderDelegate.h"
 #include <AVFoundation/AVFoundation.h>
 #include <MediaAccessibility/MediaAccessibility.h>
 #import <React/RCTBridgeModule.h>
@@ -58,6 +59,10 @@ static int const RCTVideoUnset = -1;
   NSArray *_textTracks;
   NSDictionary *_selectedTextTrack;
   NSDictionary *_selectedAudioTrack;
+
+  NSDictionary *_theSource;
+  NSDictionary *_theAudioSource;
+
   BOOL _playbackStalled;
   BOOL _playInBackground;
   BOOL _playWhenInactive;
@@ -67,6 +72,7 @@ static int const RCTVideoUnset = -1;
   NSString *_fullscreenOrientation;
   BOOL _fullscreenPlayerPresented;
   UIViewController *_presentingViewController;
+  AssetLoaderDelegate *_assetLoader;
 #if __has_include(<react-native-video/RCTVideoCache.h>)
   RCTVideoCache *_videoCache;
 #endif
@@ -336,7 +342,22 @@ static int const RCTVideoUnset = -1;
 
 #pragma mark - Player and source
 
+- (void)setAudioSrc:(NSDictionary *)source {
+  _theAudioSource = source;
+  [self crankVideo];
+}
+
 - (void)setSrc:(NSDictionary *)source {
+  _theSource = source;
+  [self crankVideo];
+}
+
+- (void)crankVideo {
+  if ((_theSource == nil) || (_theAudioSource == nil)) {
+    NSLog(@"CHICKEN: Leaving cos not ready");
+    return;
+  }
+  NSLog(@"CHICKEN: Cranking the video");
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -347,7 +368,8 @@ static int const RCTVideoUnset = -1;
         // perform on next run loop, otherwise other passed react-props may not
         // be set
         [self
-            playerItemForSource:source
+            playerItemForSource:_theSource
+                      withAudio:_theAudioSource
                    withCallback:^(AVPlayerItem *playerItem) {
                      _playerItem = playerItem;
                      [self addPlayerItemObservers];
@@ -389,14 +411,14 @@ static int const RCTVideoUnset = -1;
                      // Perform on next run loop, otherwise onVideoLoadStart is
                      // nil
                      if (self.onVideoLoadStart) {
-                       id uri = [source objectForKey:@"uri"];
-                       id type = [source objectForKey:@"type"];
+                       id uri = [_theSource objectForKey:@"uri"];
+                       id type = [_theSource objectForKey:@"type"];
                        self.onVideoLoadStart(@{
                          @"src" : @{
                            @"uri" : uri ? uri : [NSNull null],
                            @"type" : type ? type : [NSNull null],
                            @"isNetwork" : [NSNumber
-                               numberWithBool:(bool)[source
+                               numberWithBool:(bool)[_theSource
                                                   objectForKey:@"isNetwork"]]
                          },
                          @"target" : self.reactTag
@@ -435,6 +457,7 @@ static int const RCTVideoUnset = -1;
                  assetOptions:(NSDictionary *__nullable)assetOptions
                  withCallback:(void (^)(AVPlayerItem *))handler {
   if (!_textTracks) {
+    NSLog(@"FUDGE no text tracks so bye");
     handler([AVPlayerItem playerItemWithAsset:asset]);
     return;
   }
@@ -497,7 +520,17 @@ static int const RCTVideoUnset = -1;
   handler([AVPlayerItem playerItemWithAsset:mixComposition]);
 }
 
+- (NSURL *)url:(NSURL *)url WithCustomScheme:(NSString *)scheme {
+  NSLog(@"FUDGE BOY GOT CALLED");
+  NSURLComponents *components =
+      [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+  components.scheme = scheme;
+  NSLog(@"FUDGE my url is %@", [components URL]);
+  return [components URL];
+}
+
 - (void)playerItemForSource:(NSDictionary *)source
+                  withAudio:(NSDictionary *)audio
                withCallback:(void (^)(AVPlayerItem *))handler {
   bool isNetwork = [RCTConvert BOOL:[source objectForKey:@"isNetwork"]];
   bool isAsset = [RCTConvert BOOL:[source objectForKey:@"isAsset"]];
@@ -542,10 +575,95 @@ static int const RCTVideoUnset = -1;
     }
 #endif
 
-    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:assetOptions];
-    [self playerItemPrepareText:asset
-                   assetOptions:assetOptions
-                   withCallback:handler];
+    _assetLoader = [[AssetLoaderDelegate alloc] init];
+    _assetLoader.fileUrl = uri; // S3 url in this case
+    AVURLAsset *asset =
+        [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
+                            //        URLAssetWithURL:[self url:url
+                            //        WithCustomScheme:@"pixi"]
+                            options:nil];
+    [asset.resourceLoader setDelegate:_assetLoader
+                                queue:dispatch_get_main_queue()];
+      
+      
+      
+      
+      
+      // AUDIO SOURCE BEGIN
+      
+      
+      
+      // sideload text tracks
+//      AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
+//      
+//      AVAssetTrack *videoAsset =
+//      [asset tracksWithMediaType:AVMediaTypeVideo].firstObject;
+//      AVMutableCompositionTrack *videoCompTrack = [mixComposition
+//                                                   addMutableTrackWithMediaType:AVMediaTypeVideo
+//                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
+//      [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+//                                                      videoAsset.timeRange.duration)
+//                              ofTrack:videoAsset
+//                               atTime:kCMTimeZero
+//                                error:nil];
+      
+//      AVAssetTrack *audioAsset =
+//      [asset tracksWithMediaType:AVMediaTypeAudio].firstObject;
+//      AVMutableCompositionTrack *audioCompTrack = [mixComposition
+//                                                   addMutableTrackWithMediaType:AVMediaTypeAudio
+//                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
+//      [audioCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+//                                                      videoAsset.timeRange.duration)
+//                              ofTrack:audioAsset
+//                               atTime:kCMTimeZero
+//                                error:nil];
+      
+      
+      
+      
+      
+//      NSDictionary *urlAssetOptions = @{AVURLAssetPreferPreciseDurationAndTimingKey: [NSNumber numberWithBool:NO]};
+//
+//      AVMutableComposition *composition = [AVMutableComposition composition];
+//
+//
+////      NSLog(@"CHICKEN URL:%@",[audio objectForKey:@"uri"]);
+////      NSURL *audioUrl = [NSURL URLWithString:[audio objectForKey:@"uri"]];
+////      AVURLAsset *audioAsset = [AVURLAsset URLAssetWithURL:audioUrl options:urlAssetOptions];
+////
+////      AVMutableCompositionTrack *audioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
+////      [audioTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, audioAsset.duration) ofTrack:[[audioAsset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0] atTime:kCMTimeZero error:nil];
+//
+//
+////      NSURL *videoUrl = [NSURL URLWithString:@"http://..."];
+////      AVURLAsset *videoAsset = [AVURLAsset URLAssetWithURL:videoUrl options:urlAssetOptions];
+//
+//      AVMutableCompositionTrack *videoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
+//      [videoTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero, videoAsset.timeRangeduration) ofTrack:[[videoAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0] atTime:kCMTimeZero error:nil];
+//
+//      AVMutableCompositionTrack *videoCompTrack = [mixComposition
+//                                                   addMutableTrackWithMediaType:AVMediaTypeVideo
+//                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
+//      [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+//                                                      videoAsset.timeRange.duration)
+//                              ofTrack:videoAsset
+//                               atTime:kCMTimeZero
+//                                error:nil];
+//
+//
+      
+//      AVPlayerItem *playerItem = [AVPlayerItem playerItemWithAsset:composition];
+      
+                         // AUDIO SOURCE END
+
+      
+
+    // [self playerItemPrepareText:asset
+    //                assetOptions:assetOptions
+    //                withCallback:handler];
+      
+//      handler([AVPlayerItem playerItemWithAsset:mixComposition]);
+      handler([AVPlayerItem playerItemWithAsset:asset]);
     return;
   } else if (isAsset) {
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
@@ -554,6 +672,8 @@ static int const RCTVideoUnset = -1;
                    withCallback:handler];
     return;
   }
+
+  NSLog(@"FIDGE somehow got into DEAD ZONE");
 
   AVURLAsset *asset = [AVURLAsset
       URLAssetWithURL:[[NSURL alloc]
