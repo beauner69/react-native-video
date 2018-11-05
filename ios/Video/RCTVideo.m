@@ -1,5 +1,6 @@
 #import "RCTVideo.h"
-#import "AssetLoaderDelegate.h"
+//#import "AssetLoaderDelegate.h"
+#import "ChunkAssetLoaderDelegate.h"
 #include <AVFoundation/AVFoundation.h>
 #include <MediaAccessibility/MediaAccessibility.h>
 #import <React/RCTBridgeModule.h>
@@ -75,7 +76,7 @@ static int const RCTVideoUnset = -1;
   NSString *_fullscreenOrientation;
   BOOL _fullscreenPlayerPresented;
   UIViewController *_presentingViewController;
-  AssetLoaderDelegate *_assetLoader;
+  ChunkAssetLoaderDelegate *_assetLoader;
 
 #if __has_include(<react-native-video/RCTVideoCache.h>)
   RCTVideoCache *_videoCache;
@@ -353,7 +354,7 @@ static int const RCTVideoUnset = -1;
 #define AUDIO_DO_ASSET_LOADER 0
 
 #if AUDIO_DO_ASSET_LOADER
-  DOESNT WORK YET ? _assetLoader = [[AssetLoaderDelegate alloc] init];
+  DOESNT WORK YET ? _assetLoader = [[ChunkAssetLoaderDelegate alloc] init];
   _assetLoader.fileUrl = uri; // S3 url in this case
 
   //      NSDictionary *options2 =
@@ -395,13 +396,13 @@ static int const RCTVideoUnset = -1;
 - (void)setSrc:(NSDictionary *)source {
   // Start loading it immediately
   NSString *uri = [source objectForKey:@"uri"];
-  uri = @"http://192.168.2.228:8987/piss.mp4";
+//  uri = @"http://192.168.1.86:8987/piss.mp4";
+  // uri = @"http://192.168.2.228:8987/piss.mp4";
 
-#define DO_ASSET_LOADER 0
+#define DO_ASSET_LOADER 1
 
 #if DO_ASSET_LOADER
-  _assetLoader = [[AssetLoaderDelegate alloc] init];
-  _assetLoader.fileUrl = uri; // S3 url in this case
+    _assetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]];
 
   //      NSDictionary *options2 =
   //      @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
@@ -439,14 +440,54 @@ static int const RCTVideoUnset = -1;
   //  [self crankVideo];
 }
 
+- (void)playerItemFromReadyAssets:(void (^)(AVPlayerItem *))handler {
+
+    NSLog(@"POOSLICE: Got asked for ting");
+
+#define DO_MIX_COMPOSITION 1
+  // AUDIO SOURCE BEGIN
+
+  // sideload text tracks
+#if (DO_MIX_COMPOSITION)
+
+  AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
+
+  AVAssetTrack *videoTrack =
+      [_videoAsset tracksWithMediaType:AVMediaTypeVideo].firstObject;
+  AVMutableCompositionTrack *videoCompTrack = [mixComposition
+      addMutableTrackWithMediaType:AVMediaTypeVideo
+                  preferredTrackID:kCMPersistentTrackID_Invalid];
+  [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+                                                  videoTrack.timeRange.duration)
+                          ofTrack:videoTrack
+                           atTime:kCMTimeZero
+                            error:nil];
+
+  AVAssetTrack *audioTrack =
+      [_audioAsset tracksWithMediaType:AVMediaTypeAudio].firstObject;
+  AVMutableCompositionTrack *audioCompTrack = [mixComposition
+      addMutableTrackWithMediaType:AVMediaTypeAudio
+                  preferredTrackID:kCMPersistentTrackID_Invalid];
+  [audioCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+                                                  videoTrack.timeRange.duration)
+                          ofTrack:audioTrack
+                           atTime:kCMTimeZero
+                            error:nil];
+
+  handler([AVPlayerItem playerItemWithAsset:mixComposition]);
+#else
+  handler([AVPlayerItem playerItemWithAsset:_videoAsset]);
+#endif
+  return;
+}
+
 - (void)crankVideo2 {
   if ((_videoAsset == nil) || (_audioAsset == nil)) {
-    NSLog(@"CHICKEN: Leaving cos not ready");
+    NSLog(@"POOSLICE: Leaving cos not ready");
     return;
   }
   NSLog(@"POOSLICE - Can proceed to crank");
-  return;
-  NSLog(@"CHICKEN: Cranking the video");
+  NSLog(@"POOSLICE: Cranking the video");
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -456,64 +497,60 @@ static int const RCTVideoUnset = -1;
       ^{
         // perform on next run loop, otherwise other passed react-props may not
         // be set
-        [self
-            playerItemForSource:_theSource
-                      withAudio:_theAudioSource
-                   withCallback:^(AVPlayerItem *playerItem) {
-                     _playerItem = playerItem;
-                     [self addPlayerItemObservers];
+        [self playerItemFromReadyAssets:^(AVPlayerItem *playerItem) {
+            NSLog(@"POOSLICE: Got returned ting");
+          _playerItem = playerItem;
+          [self addPlayerItemObservers];
 
-                     [_player pause];
-                     [_playerViewController.view removeFromSuperview];
-                     _playerViewController = nil;
+          [_player pause];
+          [_playerViewController.view removeFromSuperview];
+          _playerViewController = nil;
 
-                     if (_playbackRateObserverRegistered) {
-                       [_player removeObserver:self
-                                    forKeyPath:playbackRate
-                                       context:nil];
-                       _playbackRateObserverRegistered = NO;
-                     }
-                     if (_isExternalPlaybackActiveObserverRegistered) {
-                       [_player removeObserver:self
-                                    forKeyPath:externalPlaybackActive
-                                       context:nil];
-                       _isExternalPlaybackActiveObserverRegistered = NO;
-                     }
+          if (_playbackRateObserverRegistered) {
+            [_player removeObserver:self forKeyPath:playbackRate context:nil];
+            _playbackRateObserverRegistered = NO;
+          }
+          if (_isExternalPlaybackActiveObserverRegistered) {
+            [_player removeObserver:self
+                         forKeyPath:externalPlaybackActive
+                            context:nil];
+            _isExternalPlaybackActiveObserverRegistered = NO;
+          }
 
-                     _player = [AVPlayer playerWithPlayerItem:_playerItem];
-                     _player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
+          _player = [AVPlayer playerWithPlayerItem:_playerItem];
+          _player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
 
-                     [_player addObserver:self
-                               forKeyPath:playbackRate
-                                  options:0
-                                  context:nil];
-                     _playbackRateObserverRegistered = YES;
+          [_player addObserver:self
+                    forKeyPath:playbackRate
+                       options:0
+                       context:nil];
+          _playbackRateObserverRegistered = YES;
 
-                     [_player addObserver:self
-                               forKeyPath:externalPlaybackActive
-                                  options:0
-                                  context:nil];
-                     _isExternalPlaybackActiveObserverRegistered = YES;
+          [_player addObserver:self
+                    forKeyPath:externalPlaybackActive
+                       options:0
+                       context:nil];
+          _isExternalPlaybackActiveObserverRegistered = YES;
 
-                     [self addPlayerTimeObserver];
+          [self addPlayerTimeObserver];
 
-                     // Perform on next run loop, otherwise onVideoLoadStart is
-                     // nil
-                     if (self.onVideoLoadStart) {
-                       id uri = [_theSource objectForKey:@"uri"];
-                       id type = [_theSource objectForKey:@"type"];
-                       self.onVideoLoadStart(@{
-                         @"src" : @{
-                           @"uri" : uri ? uri : [NSNull null],
-                           @"type" : type ? type : [NSNull null],
-                           @"isNetwork" : [NSNumber
-                               numberWithBool:(bool)[_theSource
-                                                  objectForKey:@"isNetwork"]]
-                         },
-                         @"target" : self.reactTag
-                       });
-                     }
-                   }];
+          // Perform on next run loop, otherwise onVideoLoadStart is
+          // nil
+          if (self.onVideoLoadStart) {
+            id uri = [_theSource objectForKey:@"uri"];
+            id type = [_theSource objectForKey:@"type"];
+            self.onVideoLoadStart(@{
+              @"src" : @{
+                @"uri" : uri ? uri : [NSNull null],
+                @"type" : type ? type : [NSNull null],
+                @"isNetwork" :
+                    [NSNumber numberWithBool:(bool)[_theSource
+                                                 objectForKey:@"isNetwork"]]
+              },
+              @"target" : self.reactTag
+            });
+          }
+        }];
       });
   _videoLoadStarted = YES;
 }
@@ -569,7 +606,7 @@ static int const RCTVideoUnset = -1;
 #define DO_ASSET_LOADER 0
 
 #if DO_ASSET_LOADER
-    _assetLoader = [[AssetLoaderDelegate alloc] init];
+    _assetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl];
     _assetLoader.fileUrl = uri; // S3 url in this case
 
     //      NSDictionary *options2 =

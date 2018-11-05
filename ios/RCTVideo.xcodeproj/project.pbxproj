@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3D292809219077D700DCBA34 /* SingleChunk.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D292808219077D700DCBA34 /* SingleChunk.m */; };
+		3D29280A219077D700DCBA34 /* SingleChunk.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D292808219077D700DCBA34 /* SingleChunk.m */; };
+		3D2928102190795500DCBA34 /* HunkLoad.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D29280F2190795500DCBA34 /* HunkLoad.m */; };
+		3D2928112190795500DCBA34 /* HunkLoad.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D29280F2190795500DCBA34 /* HunkLoad.m */; };
+		3D292814219079A300DCBA34 /* ChunkBucket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D292813219079A300DCBA34 /* ChunkBucket.m */; };
+		3D292815219079A300DCBA34 /* ChunkBucket.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D292813219079A300DCBA34 /* ChunkBucket.m */; };
+		3D29281821907B3300DCBA34 /* ChunkAssetLoaderDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D29281721907B3300DCBA34 /* ChunkAssetLoaderDelegate.m */; };
+		3D29281921907B3300DCBA34 /* ChunkAssetLoaderDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D29281721907B3300DCBA34 /* ChunkAssetLoaderDelegate.m */; };
+		3D29281C21907DAB00DCBA34 /* DataRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D29281B21907DAB00DCBA34 /* DataRequest.m */; };
+		3D29281D21907DAB00DCBA34 /* DataRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D29281B21907DAB00DCBA34 /* DataRequest.m */; };
 		3D7FAAEB2188674A0050403B /* AssetLoaderDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D7FAAEA2188674A0050403B /* AssetLoaderDelegate.m */; };
 		3D7FAAEC2188674A0050403B /* AssetLoaderDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D7FAAEA2188674A0050403B /* AssetLoaderDelegate.m */; };
 		3D7FAB38218885F40050403B /* ChunkLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = 3D7FAB37218885F40050403B /* ChunkLoader.m */; };
@@ -44,6 +54,16 @@
 
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libRCTVideo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRCTVideo.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D292807219077C600DCBA34 /* SingleChunk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SingleChunk.h; sourceTree = "<group>"; };
+		3D292808219077D700DCBA34 /* SingleChunk.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SingleChunk.m; sourceTree = "<group>"; };
+		3D29280B2190790500DCBA34 /* HunkLoad.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HunkLoad.h; sourceTree = "<group>"; };
+		3D29280F2190795500DCBA34 /* HunkLoad.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HunkLoad.m; sourceTree = "<group>"; };
+		3D2928122190798500DCBA34 /* ChunkBucket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChunkBucket.h; sourceTree = "<group>"; };
+		3D292813219079A300DCBA34 /* ChunkBucket.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ChunkBucket.m; sourceTree = "<group>"; };
+		3D29281621907B2700DCBA34 /* ChunkAssetLoaderDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ChunkAssetLoaderDelegate.h; sourceTree = "<group>"; };
+		3D29281721907B3300DCBA34 /* ChunkAssetLoaderDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ChunkAssetLoaderDelegate.m; sourceTree = "<group>"; };
+		3D29281A21907DA000DCBA34 /* DataRequest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DataRequest.h; sourceTree = "<group>"; };
+		3D29281B21907DAB00DCBA34 /* DataRequest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DataRequest.m; sourceTree = "<group>"; };
 		3D7FAAE92188672D0050403B /* AssetLoaderDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AssetLoaderDelegate.h; sourceTree = "<group>"; };
 		3D7FAAEA2188674A0050403B /* AssetLoaderDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AssetLoaderDelegate.m; sourceTree = "<group>"; };
 		3D7FAB37218885F40050403B /* ChunkLoader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ChunkLoader.m; sourceTree = "<group>"; };
@@ -86,6 +106,23 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		3D2928062190779900DCBA34 /* AssetChunk */ = {
+			isa = PBXGroup;
+			children = (
+				3D292807219077C600DCBA34 /* SingleChunk.h */,
+				3D292808219077D700DCBA34 /* SingleChunk.m */,
+				3D29280B2190790500DCBA34 /* HunkLoad.h */,
+				3D29280F2190795500DCBA34 /* HunkLoad.m */,
+				3D2928122190798500DCBA34 /* ChunkBucket.h */,
+				3D292813219079A300DCBA34 /* ChunkBucket.m */,
+				3D29281A21907DA000DCBA34 /* DataRequest.h */,
+				3D29281B21907DAB00DCBA34 /* DataRequest.m */,
+				3D29281621907B2700DCBA34 /* ChunkAssetLoaderDelegate.h */,
+				3D29281721907B3300DCBA34 /* ChunkAssetLoaderDelegate.m */,
+			);
+			path = AssetChunk;
+			sourceTree = "<group>";
+		};
 		49E995712048B4CE00EA7890 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -96,6 +133,7 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				3D2928062190779900DCBA34 /* AssetChunk */,
 				3D7FAB3A2188860B0050403B /* ChunkLoader.h */,
 				3D7FAB37218885F40050403B /* ChunkLoader.m */,
 				3D7FAAEA2188674A0050403B /* AssetLoaderDelegate.m */,
@@ -197,8 +235,13 @@
 				D1107C0A2110259000073188 /* UIView+FindUIViewController.m in Sources */,
 				D1107C102110259000073188 /* RCTVideoPlayerViewController.m in Sources */,
 				D1107C0E2110259000073188 /* RCTVideoManager.m in Sources */,
+				3D29281821907B3300DCBA34 /* ChunkAssetLoaderDelegate.m in Sources */,
 				D1107C0C2110259000073188 /* RCTVideo.m in Sources */,
+				3D29281C21907DAB00DCBA34 /* DataRequest.m in Sources */,
+				3D292809219077D700DCBA34 /* SingleChunk.m in Sources */,
 				3D7FAAEB2188674A0050403B /* AssetLoaderDelegate.m in Sources */,
+				3D2928102190795500DCBA34 /* HunkLoad.m in Sources */,
+				3D292814219079A300DCBA34 /* ChunkBucket.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -210,8 +253,13 @@
 				D1107C0B2110259000073188 /* UIView+FindUIViewController.m in Sources */,
 				D1107C112110259000073188 /* RCTVideoPlayerViewController.m in Sources */,
 				D1107C0F2110259000073188 /* RCTVideoManager.m in Sources */,
+				3D29281921907B3300DCBA34 /* ChunkAssetLoaderDelegate.m in Sources */,
 				D1107C0D2110259000073188 /* RCTVideo.m in Sources */,
+				3D29281D21907DAB00DCBA34 /* DataRequest.m in Sources */,
+				3D29280A219077D700DCBA34 /* SingleChunk.m in Sources */,
 				3D7FAAEC2188674A0050403B /* AssetLoaderDelegate.m in Sources */,
+				3D2928112190795500DCBA34 /* HunkLoad.m in Sources */,
+				3D292815219079A300DCBA34 /* ChunkBucket.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
