@@ -208,6 +208,7 @@
         
         // TODO: Send for MP4 parsing HERE
         CacheMP4BasedOffChunk(self, who);
+        [self startLoadingWantedChunks];
     }
     
     // Allow DataRequests to have a crack at all chunks
