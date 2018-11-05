@@ -23,7 +23,6 @@
      Get started straight away by loading in chunk number zero;
      */
     
-    NSLog(@"FUDGE init this fucker");
     if (self = [super init]) {
         _chunks = [NSMutableArray array];
         _hunkLoads = [NSMutableArray array];
@@ -31,8 +30,6 @@
         
         _fileUrl = url;
         _totalSize = -1;
-        
-        NSLog(@"FEMMURL: %@",url);
         
         SingleChunk * chunk0 = [[SingleChunk alloc] initWithIndex:0];
         [_chunks addObject:chunk0];
@@ -120,7 +117,7 @@
     
      */
     
-    NSLog(@"FUDGEPACK - Request Made - %i %i",loadingRequest.dataRequest.requestedOffset,loadingRequest.dataRequest.requestedLength);
+//    NSLog(@"FUDGEPACK - Request Made - %i %i",loadingRequest.dataRequest.requestedOffset,loadingRequest.dataRequest.requestedLength);
     
     DataRequest * cDR = [[DataRequest alloc] initWithDR: loadingRequest owner:self];
     [_dataRequests addObject:cDR];
@@ -145,14 +142,10 @@
     long int length = [_chunks count];
     long int startChunk = -1;
     
-    NSLog(@"HUNKY START LOADING");
-    
     for (long int n = 0; n < length; n++) {
         SingleChunk * cur = _chunks[n];
-//        NSLog(@"HUNKY STATE=%i",cur.state);
 
         if (cur.state == WANTED) {
-            NSLog(@"HUNKY WANTED");
             // Start building our load request from this chunk
             if (startChunk == -1) {
                 startChunk = n;
@@ -166,13 +159,11 @@
             bool bKeepGrowing = false;
             
             if (next) {
-                NSLog(@"HUNKY HAS NEXT");
                 if (next.state == WANTED) bKeepGrowing = true;
             }
             
             if (!bKeepGrowing) {
                 // We aren't growing so request this chunk range.
-                NSLog(@"HUNKY LOAD THE MF");
                 
                 // Invoke the load
                 HunkLoad * Load = [[HunkLoad alloc] initWithChunkRange:startChunk to:n ownedBy:self];
@@ -206,12 +197,9 @@
      * Send to any assetRequests that may be asking for it
      
      */
-    NSLog(@"CHUNKY: Chunk finished - %li",who.index);
-    
     if ((who.index == 0) && [_chunks count]==1) {
         _totalSize = [hunk getTotalSizeFromHeaders];
         long int finalChunk = ByteToContainingChunk(_totalSize);
-        NSLog(@"CHUNKY Chunk zero - totalSize %li finalChunk %li",_totalSize,finalChunk);
 
         for (long int n = 1; n <= finalChunk; n++) {
             SingleChunk * chunk = [[SingleChunk alloc] initWithIndex:n];

@@ -378,11 +378,11 @@ static int const RCTVideoUnset = -1;
   NSArray *requestedKeys =
       [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-  NSLog(@"POOSLICE AUDIO LOADING STARTED");
+//  NSLog(@"POOSLICE AUDIO LOADING STARTED");
   [asset loadValuesAsynchronouslyForKeys:requestedKeys
                        completionHandler:^{
                          dispatch_async(dispatch_get_main_queue(), ^{
-                           NSLog(@"POOSLICE AUDIO LOADING DONE");
+//                           NSLog(@"POOSLICE AUDIO LOADING DONE");
                            _audioAsset = asset;
                            [self crankVideo2];
                          });
@@ -425,11 +425,11 @@ static int const RCTVideoUnset = -1;
   NSArray *requestedKeys =
       [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-  NSLog(@"POOSLICE VIDEO LOADING STARTED");
+//  NSLog(@"POOSLICE VIDEO LOADING STARTED");
   [asset loadValuesAsynchronouslyForKeys:requestedKeys
                        completionHandler:^{
                          dispatch_async(dispatch_get_main_queue(), ^{
-                           NSLog(@"POOSLICE VIDEO LOADING DONE");
+//                           NSLog(@"POOSLICE VIDEO LOADING DONE");
                            _videoAsset = asset;
                            [self crankVideo2];
                          });
@@ -442,9 +442,9 @@ static int const RCTVideoUnset = -1;
 
 - (void)playerItemFromReadyAssets:(void (^)(AVPlayerItem *))handler {
 
-    NSLog(@"POOSLICE: Got asked for ting");
+//    NSLog(@"POOSLICE: Got asked for ting");
 
-#define DO_MIX_COMPOSITION 0
+#define DO_MIX_COMPOSITION 1
   // AUDIO SOURCE BEGIN
 
   // sideload text tracks
@@ -483,11 +483,11 @@ static int const RCTVideoUnset = -1;
 
 - (void)crankVideo2 {
   if ((_videoAsset == nil) || (_audioAsset == nil)) {
-    NSLog(@"POOSLICE: Leaving cos not ready");
+//    NSLog(@"POOSLICE: Leaving cos not ready");
     return;
   }
-  NSLog(@"POOSLICE - Can proceed to crank");
-  NSLog(@"POOSLICE: Cranking the video");
+//  NSLog(@"POOSLICE - Can proceed to crank");
+//  NSLog(@"POOSLICE: Cranking the video");
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -498,7 +498,7 @@ static int const RCTVideoUnset = -1;
         // perform on next run loop, otherwise other passed react-props may not
         // be set
         [self playerItemFromReadyAssets:^(AVPlayerItem *playerItem) {
-            NSLog(@"POOSLICE: Got returned ting");
+//            NSLog(@"POOSLICE: Got returned ting");
           _playerItem = playerItem;
           [self addPlayerItemObservers];
 
@@ -635,7 +635,7 @@ static int const RCTVideoUnset = -1;
     NSArray *requestedKeys =
         [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-    NSLog(@"POOSLICE LOADING STARTED");
+//    NSLog(@"POOSLICE LOADING STARTED");
     [asset loadValuesAsynchronouslyForKeys:requestedKeys
                          completionHandler:^{
                            dispatch_async(dispatch_get_main_queue(),
@@ -652,8 +652,8 @@ static int const RCTVideoUnset = -1;
                                                                         ^{
                                                                           dispatch_async(dispatch_get_main_queue(),
                                                                                          ^{
-                                                                                           NSLog(
-                                                                                               @"POOSLICE LOADING DINE");
+//                                                                                           NSLog(
+//                                                                                               @"POOSLICE LOADING DINE");
 
                                                                                            AVMutableComposition
                                                                                                *mixComposition =
@@ -788,7 +788,7 @@ static int const RCTVideoUnset = -1;
     return;
   }
 
-  NSLog(@"FIDGE somehow got into DEAD ZONE");
+//  NSLog(@"FIDGE somehow got into DEAD ZONE");
 
   AVURLAsset *asset = [AVURLAsset
       URLAssetWithURL:[[NSURL alloc]
@@ -803,10 +803,10 @@ static int const RCTVideoUnset = -1;
 
 - (void)crankVideo {
   if ((_theSource == nil) || (_theAudioSource == nil)) {
-    NSLog(@"CHICKEN: Leaving cos not ready");
+//    NSLog(@"CHICKEN: Leaving cos not ready");
     return;
   }
-  NSLog(@"CHICKEN: Cranking the video");
+//  NSLog(@"CHICKEN: Cranking the video");
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -906,7 +906,7 @@ static int const RCTVideoUnset = -1;
                  assetOptions:(NSDictionary *__nullable)assetOptions
                  withCallback:(void (^)(AVPlayerItem *))handler {
   if (!_textTracks) {
-    NSLog(@"FUDGE no text tracks so bye");
+//    NSLog(@"FUDGE no text tracks so bye");
     handler([AVPlayerItem playerItemWithAsset:asset]);
     return;
   }
@@ -970,11 +970,11 @@ static int const RCTVideoUnset = -1;
 }
 
 - (NSURL *)url:(NSURL *)url WithCustomScheme:(NSString *)scheme {
-  NSLog(@"FUDGE BOY GOT CALLED");
+//  NSLog(@"FUDGE BOY GOT CALLED");
   NSURLComponents *components =
       [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
   components.scheme = scheme;
-  NSLog(@"FUDGE my url is %@", [components URL]);
+//  NSLog(@"FUDGE my url is %@", [components URL]);
   return [components URL];
 }
 

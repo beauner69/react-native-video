@@ -35,7 +35,6 @@
     
     if ((dataPos == 0) && (bytesLeft <= bytesCanTake)) {
         // We can take them all
-        NSLog(@"Groper: One fell swoop");
         [self.chunkData appendData:data];
         bytesTaken = bytesLeft;
     } else {
@@ -49,7 +48,6 @@
     // Check if the chunk is now complete
     _loaded += bytesTaken;
     if ((_loaded >= CHUNK_SIZE) || finishing) {
-        NSLog(@"GROPER: CHUNK HAS FINISHED!");
         _state = READY;
         [_owner chunkFinishedLoading:self fromHunkLoad: hunk];
     }

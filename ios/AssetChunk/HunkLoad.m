@@ -17,11 +17,11 @@
         _lastChunk = lastChunk;
         _owner = owner;
         
-        if (_firstChunk == _lastChunk) {
-            NSLog(@"%li, // CHONK",_firstChunk);
-        }
+//        if (_firstChunk == _lastChunk) {
+//            NSLog(@"%li, // CHONK",_firstChunk);
+//        }
         
-        NSLog(@"HUNKY LOAD REQUESTED %i to %i",_firstChunk,_lastChunk);
+//        NSLog(@"HUNKY LOAD REQUESTED %i to %i",_firstChunk,_lastChunk);
 
 
         NSMutableURLRequest *request =
@@ -44,16 +44,16 @@
         range = [range
                  stringByAppendingString:[[NSNumber numberWithLongLong:lastByte]
                                           stringValue]];
-        NSLog(@"HUNKY - range: %@", range);
+//        NSLog(@"HUNKY - range: %@", range);
     
         [request setValue:range forHTTPHeaderField:@"Range"];
     
-        self.connection = [[NSURLConnection alloc] initWithRequest:request
-                                                          delegate:self
-                                                  startImmediately:NO];
-        [self.connection setDelegateQueue:[NSOperationQueue mainQueue]];
-        [self.connection start];
-
+        
+        NSURLSession * session = [NSURLSession sessionWithConfiguration:[HunkLoad getSessionConfig]
+                                                delegate:self
+                                           delegateQueue:[NSOperationQueue mainQueue]];
+        NSURLSessionDataTask * task = [session dataTaskWithRequest:request];
+        [task resume];
     }
     
     return self;
@@ -61,14 +61,20 @@
 
 #pragma mark - NSURLConnection delegate
 
-- (void)connection:(NSURLConnection *)connection
-didReceiveResponse:(NSURLResponse *)response {
-    NSLog(@"HUNKY - connected");
+- (void)URLSession:(NSURLSession *)session
+          dataTask:(NSURLSessionDataTask *)dataTask
+didReceiveResponse:(NSURLResponse *)response
+ completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
     self.response = (NSHTTPURLResponse *)response;
+    completionHandler(NSURLSessionResponseAllow);
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-    NSLog(@"RECCE - data");
+    - (void)URLSession:(NSURLSession *)session
+dataTask:(NSURLSessionDataTask *)dataTask
+        didReceiveData:(NSData *)data{
+    
+    
+//    NSLog(@"RECCE - data");
     long int bytesLeft = data.length;
     long int dataPos = 0;
     
@@ -76,7 +82,6 @@ didReceiveResponse:(NSURLResponse *)response {
     
     while (bytesLeft > 0) {
         long int targetChunkIdx = ByteToContainingChunk(_nextByte);
-        NSLog(@"RECCE - target chunk:%li nextByte:%li size:%li",targetChunkIdx,_nextByte,data.length);
         
         // Grab our target chunk
         SingleChunk *targetChunk;
@@ -90,7 +95,6 @@ didReceiveResponse:(NSURLResponse *)response {
         bool finishing = false;
         if (_owner.totalSize > -1) {
             if (_nextByte + bytesLeft >= _owner.totalSize-1) {
-                NSLog(@"FINNISH_HIMMM");
                 finishing = true;
             }
         }
@@ -102,17 +106,9 @@ didReceiveResponse:(NSURLResponse *)response {
         bytesLeft -= bytesTaken;
         dataPos += bytesTaken;
 
-        NSLog(@"RECCE - Bytes taken= %li bytesLeft %li dataPos %li",bytesTaken,bytesLeft,dataPos);
     }
 }
 
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-    NSLog(@"RECCE - Connection is finished.");
-//    NSLog(@"RECCE - done, length: %i requestedLength: %i requestedOffset: %i",
-//          self.chunkData.length, self.loadingRequest.dataRequest.requestedLength,
-//          self.loadingRequest.dataRequest.requestedOffset);
-
-}
 
 - (long int)getTotalSizeFromHeaders {
     NSDictionary *headers = [self.response allHeaderFields];
@@ -122,43 +118,20 @@ didReceiveResponse:(NSURLResponse *)response {
     return [totalbit integerValue];
 }
 
-//- (void)fillInContentInformation:
-//(AVAssetResourceLoadingContentInformationRequest *)
-//contentInformationRequest {
-//    //    NSLog(@"FUDGE - five");
-//
-//    if (contentInformationRequest == nil || self.response == nil) {
-//        return;
-//    }
-//
-//    NSString *mimeType = [self.response MIMEType];
-//    CFStringRef contentType = UTTypeCreatePreferredIdentifierForTag(
-//                                                                    kUTTagClassMIMEType, (__bridge CFStringRef)(mimeType), NULL);
-//
-//    // Work out the length
-//    long length = [self.response expectedContentLength];
-//    NSDictionary *headers = [self.response allHeaderFields];
-//    NSString *range = [headers objectForKey:@"Content-Range"];
-//    NSRange slash = [range rangeOfString:@"/"];
-//    NSString *totalbit = [range substringFromIndex:slash.location + 1];
-//    length = [totalbit integerValue];
-//
-//    NSLog(@"RECCEFART range: %@ becomes %@ length:%i", range, totalbit, length);
-//
-//    //    if (range) {
-//    //
-//    //    }
-//
-//    if (headers)
-//        NSLog(@"RECCE: Headers: %@", headers);
-//
-//    contentInformationRequest.byteRangeAccessSupported = YES;
-//    //   contentInformationRequest.contentType = AVFileTypeAppleM4V;
-//    contentInformationRequest.contentType = CFBridgingRelease(contentType);
-//    contentInformationRequest.contentLength = length;
-//
-//    NSLog(@"RECCE: mimeType %@ length %i", mimeType,
-//          contentInformationRequest.contentLength);
-//}
++ (NSURLSessionConfiguration*) getSessionConfig
+{
+    static NSURLSessionConfiguration* sessionConfig;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        sessionConfig = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+        
+        sessionConfig.timeoutIntervalForRequest = 30.0;
+        sessionConfig.HTTPMaximumConnectionsPerHost = 15;
+        sessionConfig.HTTPCookieAcceptPolicy = NSHTTPCookieAcceptPolicyNever;
+//        sessionConfig.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        
+    });
+    return sessionConfig;
+}
 
 @end

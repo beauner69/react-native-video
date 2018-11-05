@@ -50,6 +50,7 @@ NSInteger Chonks[36] = {
 };
 
 void CacheMP4BasedOffChunk(ChunkAssetLoaderDelegate * owner, SingleChunk * chunk) {
+    return;
     for (int n = 0; n < 36; n++) {
         SingleChunk * chunk = owner.chunks[Chonks[n]];
         if (chunk.state == EMPTY){

@@ -11,7 +11,6 @@
 
 
 - (id) initWithDR:(AVAssetResourceLoadingRequest*) DR owner:(ChunkAssetLoaderDelegate*)owner{
-    NSLog(@"FUDGE DataRequest init");
     if (self = [super init]) {
         _DR = DR;
         
@@ -48,7 +47,7 @@
         
         SingleChunk * chunk = owner.chunks[_nextChunkToSendFrom];
         if (chunk.state != READY) {
-            NSLog(@"NATTY: Cant send chunk yet its not ready");
+//            NSLog(@"NATTY: Cant send chunk yet its not ready");
             return false;
         }
         
@@ -59,7 +58,6 @@
         
         if ((byteInsideChunk == 0) && (bytesToSendFromChunk <= _bytesRemaining)) {
             // We can take them all
-            NSLog(@"NATTY: One fell swoop");
             [self.DR.dataRequest respondWithData:chunk.chunkData];
 
             bytesSent = bytesToSendFromChunk;
@@ -77,7 +75,6 @@
     }
     
     // If we make it out of the while loop, we are DONE
-    NSLog(@"NATTY: Data request is DONE!");
     
     [self fillInContentInformation:owner];
     [_DR finishLoading];
@@ -88,8 +85,6 @@
     if (_DR.contentInformationRequest == nil) {
         return;
     }
-    
-    NSLog(@"NATTY: Providing content information request");
     
     _DR.contentInformationRequest.byteRangeAccessSupported = YES;
     _DR.contentInformationRequest.contentType = AVFileTypeMPEG4; // Hardcoded - we ignore response content type

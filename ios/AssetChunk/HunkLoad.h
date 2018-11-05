@@ -11,7 +11,7 @@
 #import <Foundation/Foundation.h>
 #import "ChunkAssetLoaderDelegate.h"
 
-@interface HunkLoad : NSObject <NSURLConnectionDelegate>
+@interface HunkLoad : NSObject <NSURLSessionDataDelegate>
 
 @property (nonatomic, strong) NSHTTPURLResponse *response;
 @property (nonatomic, strong) NSURLConnection *connection;
