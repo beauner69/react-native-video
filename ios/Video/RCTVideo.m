@@ -444,7 +444,7 @@ static int const RCTVideoUnset = -1;
 
     NSLog(@"POOSLICE: Got asked for ting");
 
-#define DO_MIX_COMPOSITION 1
+#define DO_MIX_COMPOSITION 0
   // AUDIO SOURCE BEGIN
 
   // sideload text tracks

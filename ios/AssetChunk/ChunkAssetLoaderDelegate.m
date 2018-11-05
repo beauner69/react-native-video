@@ -9,6 +9,10 @@
 #import "ChunkAssetLoaderDelegate.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MobileCoreServices/MobileCoreServices.h>
+#import "SingleChunk.h"
+#import "HunkLoad.h"
+#import "DataRequest.h"
+#import "MP4Cacher.h"
 
 @implementation ChunkAssetLoaderDelegate
 
@@ -26,6 +30,9 @@
         _dataRequests = [NSMutableArray array];
         
         _fileUrl = url;
+        _totalSize = -1;
+        
+        NSLog(@"FEMMURL: %@",url);
         
         SingleChunk * chunk0 = [[SingleChunk alloc] initWithIndex:0];
         [_chunks addObject:chunk0];
@@ -115,12 +122,13 @@
     
     NSLog(@"FUDGEPACK - Request Made - %i %i",loadingRequest.dataRequest.requestedOffset,loadingRequest.dataRequest.requestedLength);
     
-    DataRequest * cDR = [[DataRequest alloc] initWithDR: loadingRequest];
+    DataRequest * cDR = [[DataRequest alloc] initWithDR: loadingRequest owner:self];
     [_dataRequests addObject:cDR];
     
     // REQUEST SHIT IN RANGE
     // TRIGGER REQUESTOR REFRESH
     [self startLoadingWantedChunks];
+    [self chanceForDataRequestsToSendChunkData];
     
     return YES;
     // NEW SHIT
@@ -141,7 +149,7 @@
     
     for (long int n = 0; n < length; n++) {
         SingleChunk * cur = _chunks[n];
-        NSLog(@"HUNKY STATE=%i",cur.state);
+//        NSLog(@"HUNKY STATE=%i",cur.state);
 
         if (cur.state == WANTED) {
             NSLog(@"HUNKY WANTED");
@@ -165,12 +173,23 @@
             if (!bKeepGrowing) {
                 // We aren't growing so request this chunk range.
                 NSLog(@"HUNKY LOAD THE MF");
+                
+                // Invoke the load
                 HunkLoad * Load = [[HunkLoad alloc] initWithChunkRange:startChunk to:n ownedBy:self];
                 [_hunkLoads addObject:Load];
+                
+                // Mark chunks as being loaded
+                for (long int m = startChunk; m <= n; m++) {
+                    _chunks[m].state = LOADING;
+                }
+                
+                // Reset our scanner
                 startChunk = -1;
             }
         }
     }
+    NSLog(@"HUNKY POST LOADING CHECK MAP:");
+    [self PrintChunkMap];
 }
 
 - (void)chunkFinishedLoading:(SingleChunk*)who fromHunkLoad:(HunkLoad*)hunk {
@@ -187,8 +206,41 @@
      * Send to any assetRequests that may be asking for it
      
      */
+    NSLog(@"CHUNKY: Chunk finished - %li",who.index);
     
+    if ((who.index == 0) && [_chunks count]==1) {
+        _totalSize = [hunk getTotalSizeFromHeaders];
+        long int finalChunk = ByteToContainingChunk(_totalSize);
+        NSLog(@"CHUNKY Chunk zero - totalSize %li finalChunk %li",_totalSize,finalChunk);
+
+        for (long int n = 1; n <= finalChunk; n++) {
+            SingleChunk * chunk = [[SingleChunk alloc] initWithIndex:n];
+            [_chunks addObject:chunk];
+        }
+        
+        // TODO: Send for MP4 parsing HERE
+        CacheMP4BasedOffChunk(self, who);
+    }
     
+    // Allow DataRequests to have a crack at all chunks
+    [self chanceForDataRequestsToSendChunkData];
+    
+    [self PrintChunkMap];
+}
+
+-(void)chanceForDataRequestsToSendChunkData{
+    NSMutableArray *dataRequestsCompleted = [NSMutableArray array];
+    
+    for (DataRequest *r in _dataRequests){
+        BOOL done = [r chanceToSendData:self];
+
+        if (done) {
+            [dataRequestsCompleted addObject:r];
+        }
+    }
+    
+    [_dataRequests removeObjectsInArray:dataRequestsCompleted];
+
 }
 
 - (void)resourceLoader:(AVAssetResourceLoader *)resourceLoader didCancelLoadingRequest:(AVAssetResourceLoadingRequest *)loadingRequest{
@@ -196,5 +248,30 @@
 //    [self.pendingRequests removeObject:loadingRequest];
 }
 
+
+-(void)PrintChunkMap {
+    NSMutableString * Map = [[NSMutableString alloc] initWithCapacity:[_chunks count]];
+    for (long int n=0; n < [_chunks count]; n++) {
+        SingleChunk * c = _chunks[n];
+        switch(c.state) {
+            case EMPTY:
+                [Map appendString:@"."];
+                break;
+            case WANTED:
+                [Map appendString:@"_"];
+                break;
+            case LOADING:
+                [Map appendString:@"="];
+                break;
+            case READY:
+                [Map appendString:@"X"];
+                break;
+            default:
+                [Map appendString:@"?"];
+                break;
+        }
+    }
+    NSLog(@"CHUNKY CHUNKMAP %@",Map);
+}
 
 @end

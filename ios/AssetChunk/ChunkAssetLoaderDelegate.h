@@ -11,9 +11,9 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
-#import "SingleChunk.h"
-#import "HunkLoad.h"
-#import "DataRequest.h"
+@class DataRequest;
+@class SingleChunk;
+@class HunkLoad;
 
 @interface ChunkAssetLoaderDelegate : NSObject <AVAssetResourceLoaderDelegate>
 
@@ -23,8 +23,11 @@
 @property (nonatomic, strong) NSMutableArray<SingleChunk*> *chunks;
 @property (nonatomic, strong) NSMutableArray<HunkLoad*> *hunkLoads;
 
+@property (nonatomic) long int totalSize;
+
 
 -(id) initWithUrl:(NSURL *)url;
+- (void)chunkFinishedLoading:(SingleChunk*)who fromHunkLoad:(HunkLoad*)hunk;
 
 @end
 
