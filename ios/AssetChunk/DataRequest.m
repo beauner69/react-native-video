@@ -13,7 +13,9 @@
 - (id) initWithDR:(AVAssetResourceLoadingRequest*) DR owner:(ChunkAssetLoaderDelegate*)owner{
     if (self = [super init]) {
         _DR = DR;
-        
+
+        long int chunkCount = [owner.chunks count];
+
         _nextByteToSend = DR.dataRequest.requestedOffset;
         _bytesRemaining = DR.dataRequest.requestedLength;
         _nextChunkToSendFrom = ByteToContainingChunk(_nextByteToSend);
@@ -21,8 +23,22 @@
         _firstChunk = ByteToContainingChunk(_nextByteToSend);
         _lastChunk = ByteToContainingChunk(StartAndLengthToLastByte(_nextByteToSend,_bytesRemaining));
         
+        if (_firstChunk >= owner.highestChunkRequestedSoFar) {
+//            NSLog(@"ROGER: RISING %i %i",_firstChunk,owner.highestChunkRequestedSoFar);
+            owner.highestChunkRequestedSoFar = _firstChunk;
+        } else {
+//            NSLog(@"ROGER: FALLING %i %i",_firstChunk,owner.highestChunkRequestedSoFar);
+            SingleChunk * fosty = owner.chunks[_firstChunk];
+            if (fosty.state == EMPTY) {
+                
+                if (_lastChunk - _firstChunk < 4) {
+                    _lastChunk = _firstChunk + 4;
+                    if (_lastChunk >= chunkCount) _lastChunk = chunkCount-1;
+                }
+            }
+        }
+        
         // Make sure the chunks are booked in
-        long int chunkCount = [owner.chunks count];
         for (long int n = _firstChunk; n <= _lastChunk; n++) {
             if (n < chunkCount) {
                 SingleChunk * c = owner.chunks[n];
@@ -64,7 +80,7 @@
         } else {
             // We need to chop out the bytes we are taking
             long int bytesToTake = (_bytesRemaining < bytesToSendFromChunk) ? _bytesRemaining:bytesToSendFromChunk;
-            NSLog(@"NATTY: Partial - taking %li",bytesToTake);
+//            NSLog(@"NATTY: Partial - taking %li",bytesToTake);
             [self.DR.dataRequest respondWithData:[chunk.chunkData subdataWithRange:NSMakeRange(byteInsideChunk, bytesToTake)]];
             bytesSent = bytesToTake;
         }
@@ -87,7 +103,7 @@
     }
     
     _DR.contentInformationRequest.byteRangeAccessSupported = YES;
-    _DR.contentInformationRequest.contentType = AVFileTypeMPEG4; // Hardcoded - we ignore response content type
+    _DR.contentInformationRequest.contentType = owner.format == VIDEO ? AVFileTypeMPEG4 : AVFileTypeAppleM4A; // Hardcoded - we ignore response content type
     _DR.contentInformationRequest.contentLength = owner.totalSize;
 }
 

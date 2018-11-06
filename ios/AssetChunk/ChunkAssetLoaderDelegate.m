@@ -16,7 +16,7 @@
 
 @implementation ChunkAssetLoaderDelegate
 
--(id) initWithUrl:(NSURL *)url {
+-(id) initWithUrl:(NSURL *)url format:(CALGFormat)format {
     /*
      Initialise
      
@@ -30,6 +30,9 @@
         
         _fileUrl = url;
         _totalSize = -1;
+        _format = format;
+        
+        _highestChunkRequestedSoFar = -1;
         
         SingleChunk * chunk0 = [[SingleChunk alloc] initWithIndex:0];
         [_chunks addObject:chunk0];
@@ -179,8 +182,8 @@
             }
         }
     }
-    NSLog(@"HUNKY POST LOADING CHECK MAP:");
-    [self PrintChunkMap];
+//    NSLog(@"HUNKY POST LOADING CHECK MAP:");
+//    [self PrintChunkMap];
 }
 
 - (void)chunkFinishedLoading:(SingleChunk*)who fromHunkLoad:(HunkLoad*)hunk {
@@ -206,15 +209,16 @@
             [_chunks addObject:chunk];
         }
         
-        // TODO: Send for MP4 parsing HERE
-        CacheMP4BasedOffChunk(self, who);
-        [self startLoadingWantedChunks];
+        if (_format == VIDEO) {
+            CacheMP4BasedOffChunk(self, who);
+            [self startLoadingWantedChunks];
+        }
     }
     
     // Allow DataRequests to have a crack at all chunks
     [self chanceForDataRequestsToSendChunkData];
     
-    [self PrintChunkMap];
+//    [self PrintChunkMap];
 }
 
 -(void)chanceForDataRequestsToSendChunkData{
@@ -236,6 +240,15 @@
         NSLog(@"PANTS - cancel received - TODO");
 //    [self.pendingRequests removeObject:loadingRequest];
 }
+
+-(void)dealloc {
+    // Tell all http requests to DIE
+    for (HunkLoad *h in _hunkLoads){
+        [h cleanup];
+    }
+}
+
+
 
 
 -(void)PrintChunkMap {

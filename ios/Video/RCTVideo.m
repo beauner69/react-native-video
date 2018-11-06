@@ -74,9 +74,12 @@ static int const RCTVideoUnset = -1;
   NSString *_resizeMode;
   BOOL _fullscreen;
   NSString *_fullscreenOrientation;
-  BOOL _fullscreenPlayerPresented;
+    BOOL _fullscreenPlayerPresented;
+    BOOL inView; // We are here
   UIViewController *_presentingViewController;
-  ChunkAssetLoaderDelegate *_assetLoader;
+  ChunkAssetLoaderDelegate * videoAssetLoader;
+  ChunkAssetLoaderDelegate * audioAssetLoader;
+    int thisInst;
 
 #if __has_include(<react-native-video/RCTVideoCache.h>)
   RCTVideoCache *_videoCache;
@@ -84,8 +87,12 @@ static int const RCTVideoUnset = -1;
 }
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher {
+    static int instid = 0;
+
   if ((self = [super init])) {
     _eventDispatcher = eventDispatcher;
+      thisInst = instid++;
+      inView = true;
 
     _playbackRateObserverRegistered = NO;
     _isExternalPlaybackActiveObserverRegistered = NO;
@@ -199,6 +206,7 @@ static int const RCTVideoUnset = -1;
 #pragma mark - Progress
 
 - (void)dealloc {
+//    NSLog(@"PANTIES DEALLOC inst:%i",thisInst);
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   [self removePlayerLayer];
   [self removePlayerItemObservers];
@@ -354,35 +362,33 @@ static int const RCTVideoUnset = -1;
 #define AUDIO_DO_ASSET_LOADER 0
 
 #if AUDIO_DO_ASSET_LOADER
-  DOESNT WORK YET ? _assetLoader = [[ChunkAssetLoaderDelegate alloc] init];
-  _assetLoader.fileUrl = uri; // S3 url in this case
+  audioAssetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri] format:AUDIO];
 
-  //      NSDictionary *options2 =
-  //      @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
+        NSDictionary *options2 =
+        @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
-  NSDictionary *options2 = @{};
+//  NSDictionary *options2 = @{};
 
   AVURLAsset *asset =
       [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
-                          //        URLAssetWithURL:[self url:url
-                          //        WithCustomScheme:@"pixi"]
                           options:options2];
-  [asset.resourceLoader setDelegate:_assetLoader
+  [asset.resourceLoader setDelegate:audioAssetLoader
                               queue:dispatch_get_main_queue()];
 
 #else
-  AVURLAsset *asset =
-      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:uri] options:nil];
+    NSDictionary *options2 =
+    @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
+
+    AVURLAsset *asset =
+      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:uri] options:options2];
 #endif
 
   NSArray *requestedKeys =
       [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-//  NSLog(@"POOSLICE AUDIO LOADING STARTED");
   [asset loadValuesAsynchronouslyForKeys:requestedKeys
                        completionHandler:^{
                          dispatch_async(dispatch_get_main_queue(), ^{
-//                           NSLog(@"POOSLICE AUDIO LOADING DONE");
                            _audioAsset = asset;
                            [self crankVideo2];
                          });
@@ -393,28 +399,39 @@ static int const RCTVideoUnset = -1;
   //  [self crankVideo];
 }
 
+- (NSURL *) url:(NSURL*) url WithCustomScheme:(NSString *)scheme{
+    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+    components.scheme = scheme;
+    return [components URL];
+}
+
+
 - (void)setSrc:(NSDictionary *)source {
+//    NSLog(@"PANTIES VAL EXISTS=%@ inst:%i",videoAssetLoader?@"YES":@"NO",thisInst);
   // Start loading it immediately
   NSString *uri = [source objectForKey:@"uri"];
 //  uri = @"http://192.168.1.86:8987/piss.mp4";
   // uri = @"http://192.168.2.228:8987/piss.mp4";
 
+
 #define DO_ASSET_LOADER 1
 
 #if DO_ASSET_LOADER
-    _assetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]];
+    videoAssetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri] format:VIDEO];
 
-  //      NSDictionary *options2 =
-  //      @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
+    NSDictionary *options2 =
+    @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
-  NSDictionary *options2 = @{};
+    //  NSDictionary *options2 = @{};
+    
+    // Change our URL
+    
 
   AVURLAsset *asset =
-      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
-                          //        URLAssetWithURL:[self url:url
-                          //        WithCustomScheme:@"pixi"]
+      [AVURLAsset URLAssetWithURL:
+       [self url:[NSURL URLWithString:uri] WithCustomScheme:@"pixi"]
                           options:options2];
-  [asset.resourceLoader setDelegate:_assetLoader
+  [asset.resourceLoader setDelegate:videoAssetLoader
                               queue:dispatch_get_main_queue()];
 
 #else
@@ -425,24 +442,17 @@ static int const RCTVideoUnset = -1;
   NSArray *requestedKeys =
       [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-//  NSLog(@"POOSLICE VIDEO LOADING STARTED");
   [asset loadValuesAsynchronouslyForKeys:requestedKeys
                        completionHandler:^{
                          dispatch_async(dispatch_get_main_queue(), ^{
-//                           NSLog(@"POOSLICE VIDEO LOADING DONE");
                            _videoAsset = asset;
                            [self crankVideo2];
                          });
                        }];
-
-  // Old way:
-  //  _theSource = source;
-  //  [self crankVideo];
 }
 
 - (void)playerItemFromReadyAssets:(void (^)(AVPlayerItem *))handler {
 
-//    NSLog(@"POOSLICE: Got asked for ting");
 
 #define DO_MIX_COMPOSITION 1
   // AUDIO SOURCE BEGIN
@@ -469,7 +479,7 @@ static int const RCTVideoUnset = -1;
       addMutableTrackWithMediaType:AVMediaTypeAudio
                   preferredTrackID:kCMPersistentTrackID_Invalid];
   [audioCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
-                                                  videoTrack.timeRange.duration)
+                                                  audioTrack.timeRange.duration)
                           ofTrack:audioTrack
                            atTime:kCMTimeZero
                             error:nil];
@@ -483,11 +493,15 @@ static int const RCTVideoUnset = -1;
 
 - (void)crankVideo2 {
   if ((_videoAsset == nil) || (_audioAsset == nil)) {
-//    NSLog(@"POOSLICE: Leaving cos not ready");
     return;
   }
-//  NSLog(@"POOSLICE - Can proceed to crank");
-//  NSLog(@"POOSLICE: Cranking the video");
+//    NSLog(@"PANTIES CRANK inst:%i",thisInst);
+    
+    if (!inView) {
+//        NSLog(@"PANTIES FUCK ME <=-=----= %i",thisInst);
+        return;
+    }
+    
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -495,10 +509,9 @@ static int const RCTVideoUnset = -1;
   dispatch_after(
       dispatch_time(DISPATCH_TIME_NOW, (int64_t)0), dispatch_get_main_queue(),
       ^{
-        // perform on next run loop, otherwise other passed react-props may not
+          // perform on next run loop, otherwise other passed react-props may not
         // be set
         [self playerItemFromReadyAssets:^(AVPlayerItem *playerItem) {
-//            NSLog(@"POOSLICE: Got returned ting");
           _playerItem = playerItem;
           [self addPlayerItemObservers];
 
@@ -635,7 +648,6 @@ static int const RCTVideoUnset = -1;
     NSArray *requestedKeys =
         [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-//    NSLog(@"POOSLICE LOADING STARTED");
     [asset loadValuesAsynchronouslyForKeys:requestedKeys
                          completionHandler:^{
                            dispatch_async(dispatch_get_main_queue(),
@@ -652,8 +664,6 @@ static int const RCTVideoUnset = -1;
                                                                         ^{
                                                                           dispatch_async(dispatch_get_main_queue(),
                                                                                          ^{
-//                                                                                           NSLog(
-//                                                                                               @"POOSLICE LOADING DINE");
 
                                                                                            AVMutableComposition
                                                                                                *mixComposition =
@@ -788,8 +798,6 @@ static int const RCTVideoUnset = -1;
     return;
   }
 
-//  NSLog(@"FIDGE somehow got into DEAD ZONE");
-
   AVURLAsset *asset = [AVURLAsset
       URLAssetWithURL:[[NSURL alloc]
                           initFileURLWithPath:[[NSBundle mainBundle]
@@ -803,10 +811,8 @@ static int const RCTVideoUnset = -1;
 
 - (void)crankVideo {
   if ((_theSource == nil) || (_theAudioSource == nil)) {
-//    NSLog(@"CHICKEN: Leaving cos not ready");
     return;
   }
-//  NSLog(@"CHICKEN: Cranking the video");
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -967,15 +973,6 @@ static int const RCTVideoUnset = -1;
   }
 
   handler([AVPlayerItem playerItemWithAsset:mixComposition]);
-}
-
-- (NSURL *)url:(NSURL *)url WithCustomScheme:(NSString *)scheme {
-//  NSLog(@"FUDGE BOY GOT CALLED");
-  NSURLComponents *components =
-      [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
-  components.scheme = scheme;
-//  NSLog(@"FUDGE my url is %@", [components URL]);
-  return [components URL];
 }
 
 #if __has_include(<react-native-video/RCTVideoCache.h>)
@@ -1767,6 +1764,7 @@ static int const RCTVideoUnset = -1;
 }
 
 - (void)removePlayerLayer {
+  if (!_playerLayer) return;
   [_playerLayer removeFromSuperlayer];
   if (_playerLayerObserverSet) {
     [_playerLayer removeObserver:self forKeyPath:readyForDisplayKeyPath];
@@ -1847,7 +1845,10 @@ static int const RCTVideoUnset = -1;
 #pragma mark - Lifecycle
 
 - (void)removeFromSuperview {
-  [_player pause];
+//    NSLog(@"PANTIES REMOVEFROMSUPER inst:%i",thisInst);
+    inView = false;
+
+    [_player pause];
   if (_playbackRateObserverRegistered) {
     [_player removeObserver:self forKeyPath:playbackRate context:nil];
     _playbackRateObserverRegistered = NO;

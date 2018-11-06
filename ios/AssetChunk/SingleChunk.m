@@ -40,7 +40,6 @@
     } else {
         // We need to chop out the bytes we are taking
         long int bytesToTake = (bytesLeft < bytesCanTake) ? bytesLeft:bytesCanTake;
-        NSLog(@"Groper: Partial - taking %li",bytesToTake);
         [self.chunkData appendData:[data subdataWithRange:NSMakeRange(dataPos, bytesToTake)]];
         bytesTaken = bytesToTake;
     }

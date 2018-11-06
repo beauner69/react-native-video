@@ -16,6 +16,7 @@
         _firstChunk = firstChunk;
         _lastChunk = lastChunk;
         _owner = owner;
+        _cancelled = false;
         
 //        if (_firstChunk == _lastChunk) {
 //            NSLog(@"%li, // CHONK",_firstChunk);
@@ -49,14 +50,26 @@
         [request setValue:range forHTTPHeaderField:@"Range"];
     
         
-        NSURLSession * session = [NSURLSession sessionWithConfiguration:[HunkLoad getSessionConfig]
+        _session = [NSURLSession sessionWithConfiguration:[HunkLoad getSessionConfig]
                                                 delegate:self
                                            delegateQueue:[NSOperationQueue mainQueue]];
-        NSURLSessionDataTask * task = [session dataTaskWithRequest:request];
-        [task resume];
+        _task = [_session dataTaskWithRequest:request];
+        [_task resume];
     }
     
     return self;
+}
+
+-(void)cleanup {
+    _cancelled = true;
+    if (_task) {
+        [_task cancel];
+        _task = nil;
+    }
+    if (_session) {
+        [_session invalidateAndCancel];
+        _session = nil;
+    }
 }
 
 #pragma mark - NSURLConnection delegate
@@ -73,8 +86,10 @@ didReceiveResponse:(NSURLResponse *)response
 dataTask:(NSURLSessionDataTask *)dataTask
         didReceiveData:(NSData *)data{
     
+        if (_cancelled) {
+            return;
+        }
     
-//    NSLog(@"RECCE - data");
     long int bytesLeft = data.length;
     long int dataPos = 0;
     
@@ -109,12 +124,23 @@ dataTask:(NSURLSessionDataTask *)dataTask
     }
 }
 
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
+didCompleteWithError:(NSError *)error; {
+    _owner = nil; // Hopefully garbage will get collected.
+    [self cleanup];
+}
+
 
 - (long int)getTotalSizeFromHeaders {
     NSDictionary *headers = [self.response allHeaderFields];
     NSString *range = [headers objectForKey:@"Content-Range"];
     NSRange slash = [range rangeOfString:@"/"];
     NSString *totalbit = [range substringFromIndex:slash.location + 1];
+    
+//    NSString *mimeType = [self.response MIMEType];
+//    NSLog(@"KEVIN MIMETYPE: %@",mimeType);
+    
     return [totalbit integerValue];
 }
 
@@ -123,11 +149,12 @@ dataTask:(NSURLSessionDataTask *)dataTask
     static NSURLSessionConfiguration* sessionConfig;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        sessionConfig = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+        sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
         
         sessionConfig.timeoutIntervalForRequest = 30.0;
         sessionConfig.HTTPMaximumConnectionsPerHost = 15;
         sessionConfig.HTTPCookieAcceptPolicy = NSHTTPCookieAcceptPolicyNever;
+        sessionConfig.HTTPShouldUsePipelining = NO;
 //        sessionConfig.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
         
     });
