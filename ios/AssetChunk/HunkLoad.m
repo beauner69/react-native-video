@@ -12,6 +12,8 @@
 @implementation HunkLoad
 
 -(id) initWithChunkRange:(long int)firstChunk to:(long int)lastChunk ownedBy:(ChunkAssetLoaderDelegate*)owner {
+    static int hunknum = 0;
+    
     if (self = [super init]) {
         _firstChunk = firstChunk;
         _lastChunk = lastChunk;
@@ -24,9 +26,16 @@
         
 //        NSLog(@"HUNKY LOAD REQUESTED %i to %i",_firstChunk,_lastChunk);
 
+        NSURL * theUrl = owner.fileUrl;
+        
+//        hunknum++;
+//        if (hunknum == 100) {
+//            theUrl = [NSURL URLWithString:@"http://thepisspot.org/asfjkl"];
+//        }
+//        NSLog(@"HUNKNUM:%i%",hunknum);
 
         NSMutableURLRequest *request =
-        [NSMutableURLRequest requestWithURL:owner.fileUrl
+        [NSMutableURLRequest requestWithURL:theUrl
                                 cachePolicy:NSURLRequestUseProtocolCachePolicy
                             timeoutInterval:60.0];
     
