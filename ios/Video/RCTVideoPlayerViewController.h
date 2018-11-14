@@ -16,5 +16,6 @@
 
 // Optional paramters
 @property (nonatomic, weak) NSString* preferredOrientation;
+@property (nonatomic) BOOL autorotate;
 
 @end
