@@ -32,6 +32,7 @@ class RCTVideoManager extends RCTViewManager {
       .addDirectEvent("onVideoError")
       .addDirectEvent("onVideoLoad")
       .addDirectEvent("onVideoLoadStart")
+      .addDirectEvent("onVideoLoadUpdate")
       .addDirectEvent("onVideoProgress");
   }
 

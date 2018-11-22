@@ -41,6 +41,7 @@ RCT_EXPORT_VIEW_PROPERTY(progressUpdateInterval, float);
 /* Should support: onLoadStart, onLoad, and onError to stay consistent with
  * Image */
 RCT_EXPORT_VIEW_PROPERTY(onVideoLoadStart, RCTBubblingEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoLoadUpdate, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoLoad, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoBuffer, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoError, RCTBubblingEventBlock);

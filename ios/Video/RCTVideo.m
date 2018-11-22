@@ -74,12 +74,12 @@ static int const RCTVideoUnset = -1;
   NSString *_resizeMode;
   BOOL _fullscreen;
   NSString *_fullscreenOrientation;
-    BOOL _fullscreenPlayerPresented;
-    BOOL inView; // We are here
+  BOOL _fullscreenPlayerPresented;
+  BOOL inView; // We are here
   UIViewController *_presentingViewController;
-  ChunkAssetLoaderDelegate * videoAssetLoader;
-  ChunkAssetLoaderDelegate * audioAssetLoader;
-    int thisInst;
+  ChunkAssetLoaderDelegate *videoAssetLoader;
+  ChunkAssetLoaderDelegate *audioAssetLoader;
+  int thisInst;
 
 #if __has_include(<react-native-video/RCTVideoCache.h>)
   RCTVideoCache *_videoCache;
@@ -87,12 +87,12 @@ static int const RCTVideoUnset = -1;
 }
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher {
-    static int instid = 0;
+  static int instid = 0;
 
   if ((self = [super init])) {
     _eventDispatcher = eventDispatcher;
-      thisInst = instid++;
-      inView = true;
+    thisInst = instid++;
+    inView = true;
 
     _playbackRateObserverRegistered = NO;
     _isExternalPlaybackActiveObserverRegistered = NO;
@@ -206,7 +206,7 @@ static int const RCTVideoUnset = -1;
 #pragma mark - Progress
 
 - (void)dealloc {
-//    NSLog(@"PANTIES DEALLOC inst:%i",thisInst);
+  //    NSLog(@"PANTIES DEALLOC inst:%i",thisInst);
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   [self removePlayerLayer];
   [self removePlayerItemObservers];
@@ -362,12 +362,15 @@ static int const RCTVideoUnset = -1;
 #define AUDIO_DO_ASSET_LOADER 0
 
 #if AUDIO_DO_ASSET_LOADER
-  audioAssetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri] format:AUDIO];
+  audioAssetLoader =
+      [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]
+                                             format:AUDIO
+                                            vidview:self];
 
-        NSDictionary *options2 =
-        @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
+  NSDictionary *options2 =
+      @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
-//  NSDictionary *options2 = @{};
+  //  NSDictionary *options2 = @{};
 
   AVURLAsset *asset =
       [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
@@ -376,10 +379,10 @@ static int const RCTVideoUnset = -1;
                               queue:dispatch_get_main_queue()];
 
 #else
-    NSDictionary *options2 =
-    @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
+  NSDictionary *options2 =
+      @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
-    AVURLAsset *asset =
+  AVURLAsset *asset =
       [AVURLAsset URLAssetWithURL:[NSURL URLWithString:uri] options:options2];
 #endif
 
@@ -399,37 +402,39 @@ static int const RCTVideoUnset = -1;
   //  [self crankVideo];
 }
 
-- (NSURL *) url:(NSURL*) url WithCustomScheme:(NSString *)scheme{
-    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
-    components.scheme = scheme;
-    return [components URL];
+- (NSURL *)url:(NSURL *)url WithCustomScheme:(NSString *)scheme {
+  NSURLComponents *components =
+      [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+  components.scheme = scheme;
+  return [components URL];
 }
 
-
 - (void)setSrc:(NSDictionary *)source {
-//    NSLog(@"PANTIES VAL EXISTS=%@ inst:%i",videoAssetLoader?@"YES":@"NO",thisInst);
+  //    NSLog(@"PANTIES VAL EXISTS=%@
+  //    inst:%i",videoAssetLoader?@"YES":@"NO",thisInst);
   // Start loading it immediately
   NSString *uri = [source objectForKey:@"uri"];
-//  uri = @"http://192.168.1.86:8987/piss.mp4";
+  //  uri = @"http://192.168.1.86:8987/piss.mp4";
   // uri = @"http://192.168.2.228:8987/piss.mp4";
-
 
 #define DO_ASSET_LOADER 1
 
 #if DO_ASSET_LOADER
-    videoAssetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri] format:VIDEO];
+  videoAssetLoader =
+      [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]
+                                             format:VIDEO
+                                            vidview:self];
 
-    NSDictionary *options2 =
-    @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
+  NSDictionary *options2 =
+      @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
-    //  NSDictionary *options2 = @{};
-    
-    // Change our URL
-    
+  //  NSDictionary *options2 = @{};
+
+  // Change our URL
 
   AVURLAsset *asset =
-      [AVURLAsset URLAssetWithURL:
-       [self url:[NSURL URLWithString:uri] WithCustomScheme:@"pixi"]
+      [AVURLAsset URLAssetWithURL:[self url:[NSURL URLWithString:uri]
+                                      WithCustomScheme:@"pixi"]
                           options:options2];
   [asset.resourceLoader setDelegate:videoAssetLoader
                               queue:dispatch_get_main_queue()];
@@ -452,7 +457,6 @@ static int const RCTVideoUnset = -1;
 }
 
 - (void)playerItemFromReadyAssets:(void (^)(AVPlayerItem *))handler {
-
 
 #define DO_MIX_COMPOSITION 1
   // AUDIO SOURCE BEGIN
@@ -495,13 +499,13 @@ static int const RCTVideoUnset = -1;
   if ((_videoAsset == nil) || (_audioAsset == nil)) {
     return;
   }
-//    NSLog(@"PANTIES CRANK inst:%i",thisInst);
-    
-    if (!inView) {
-//        NSLog(@"PANTIES FUCK ME <=-=----= %i",thisInst);
-        return;
-    }
-    
+  //    NSLog(@"PANTIES CRANK inst:%i",thisInst);
+
+  if (!inView) {
+    //        NSLog(@"PANTIES FUCK ME <=-=----= %i",thisInst);
+    return;
+  }
+
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -509,7 +513,7 @@ static int const RCTVideoUnset = -1;
   dispatch_after(
       dispatch_time(DISPATCH_TIME_NOW, (int64_t)0), dispatch_get_main_queue(),
       ^{
-          // perform on next run loop, otherwise other passed react-props may not
+        // perform on next run loop, otherwise other passed react-props may not
         // be set
         [self playerItemFromReadyAssets:^(AVPlayerItem *playerItem) {
           _playerItem = playerItem;
@@ -648,86 +652,87 @@ static int const RCTVideoUnset = -1;
     NSArray *requestedKeys =
         [NSArray arrayWithObjects:@"duration", @"tracks", nil];
 
-    [asset loadValuesAsynchronouslyForKeys:requestedKeys
-                         completionHandler:^{
-                           dispatch_async(dispatch_get_main_queue(),
-                                          ^{
-                                            AVURLAsset *audioAss = [AVURLAsset
-                                                URLAssetWithURL:
-                                                    [NSURL
-                                                        URLWithString:audioUri]
-                                                        options:nil];
+    [asset
+        loadValuesAsynchronouslyForKeys:requestedKeys
+                      completionHandler:
+                          ^{
+                            dispatch_async(dispatch_get_main_queue(),
+                                           ^{
+                                             AVURLAsset *audioAss = [AVURLAsset
+                                                 URLAssetWithURL:
+                                                     [NSURL
+                                                         URLWithString:audioUri]
+                                                         options:nil];
 
-                                            [audioAss loadValuesAsynchronouslyForKeys:
-                                                          requestedKeys
-                                                                    completionHandler:
-                                                                        ^{
-                                                                          dispatch_async(dispatch_get_main_queue(),
-                                                                                         ^{
+                                             [audioAss loadValuesAsynchronouslyForKeys:
+                                                           requestedKeys
+                                                                     completionHandler:
+                                                                         ^{
+                                                                           dispatch_async(dispatch_get_main_queue(),
+                                                                                          ^{
+                                                                                            AVMutableComposition
+                                                                                                *mixComposition =
+                                                                                                    [[AVMutableComposition
+                                                                                                        alloc]
+                                                                                                        init];
 
-                                                                                           AVMutableComposition
-                                                                                               *mixComposition =
-                                                                                                   [[AVMutableComposition
-                                                                                                       alloc]
-                                                                                                       init];
+                                                                                            AVAssetTrack *videoAsset =
+                                                                                                [asset
+                                                                                                    tracksWithMediaType:
+                                                                                                        AVMediaTypeVideo]
+                                                                                                    .firstObject;
+                                                                                            AVMutableCompositionTrack
+                                                                                                *videoCompTrack = [mixComposition
+                                                                                                    addMutableTrackWithMediaType:
+                                                                                                        AVMediaTypeVideo
+                                                                                                                preferredTrackID:
+                                                                                                                    kCMPersistentTrackID_Invalid];
+                                                                                            [videoCompTrack
+                                                                                                insertTimeRange:
+                                                                                                    CMTimeRangeMake(
+                                                                                                        kCMTimeZero,
+                                                                                                        videoAsset
+                                                                                                            .timeRange
+                                                                                                            .duration)
+                                                                                                        ofTrack:
+                                                                                                            videoAsset
+                                                                                                         atTime:
+                                                                                                             kCMTimeZero
+                                                                                                          error:
+                                                                                                              nil];
 
-                                                                                           AVAssetTrack *videoAsset =
-                                                                                               [asset
-                                                                                                   tracksWithMediaType:
-                                                                                                       AVMediaTypeVideo]
-                                                                                                   .firstObject;
-                                                                                           AVMutableCompositionTrack
-                                                                                               *videoCompTrack = [mixComposition
-                                                                                                   addMutableTrackWithMediaType:
-                                                                                                       AVMediaTypeVideo
-                                                                                                               preferredTrackID:
-                                                                                                                   kCMPersistentTrackID_Invalid];
-                                                                                           [videoCompTrack
-                                                                                               insertTimeRange:
-                                                                                                   CMTimeRangeMake(
-                                                                                                       kCMTimeZero,
-                                                                                                       videoAsset
-                                                                                                           .timeRange
-                                                                                                           .duration)
-                                                                                                       ofTrack:
-                                                                                                           videoAsset
-                                                                                                        atTime:
-                                                                                                            kCMTimeZero
-                                                                                                         error:
-                                                                                                             nil];
+                                                                                            AVAssetTrack *audioAsset =
+                                                                                                [audioAss
+                                                                                                    tracksWithMediaType:
+                                                                                                        AVMediaTypeAudio]
+                                                                                                    .firstObject;
+                                                                                            AVMutableCompositionTrack
+                                                                                                *audioCompTrack = [mixComposition
+                                                                                                    addMutableTrackWithMediaType:
+                                                                                                        AVMediaTypeAudio
+                                                                                                                preferredTrackID:
+                                                                                                                    kCMPersistentTrackID_Invalid];
+                                                                                            [audioCompTrack
+                                                                                                insertTimeRange:
+                                                                                                    CMTimeRangeMake(
+                                                                                                        kCMTimeZero,
+                                                                                                        videoAsset
+                                                                                                            .timeRange
+                                                                                                            .duration)
+                                                                                                        ofTrack:
+                                                                                                            audioAsset
+                                                                                                         atTime:
+                                                                                                             kCMTimeZero
+                                                                                                          error:
+                                                                                                              nil];
 
-                                                                                           AVAssetTrack *audioAsset =
-                                                                                               [audioAss
-                                                                                                   tracksWithMediaType:
-                                                                                                       AVMediaTypeAudio]
-                                                                                                   .firstObject;
-                                                                                           AVMutableCompositionTrack
-                                                                                               *audioCompTrack = [mixComposition
-                                                                                                   addMutableTrackWithMediaType:
-                                                                                                       AVMediaTypeAudio
-                                                                                                               preferredTrackID:
-                                                                                                                   kCMPersistentTrackID_Invalid];
-                                                                                           [audioCompTrack
-                                                                                               insertTimeRange:
-                                                                                                   CMTimeRangeMake(
-                                                                                                       kCMTimeZero,
-                                                                                                       videoAsset
-                                                                                                           .timeRange
-                                                                                                           .duration)
-                                                                                                       ofTrack:
-                                                                                                           audioAsset
-                                                                                                        atTime:
-                                                                                                            kCMTimeZero
-                                                                                                         error:
-                                                                                                             nil];
-
-                                                                                           handler([AVPlayerItem
-                                                                                               playerItemWithAsset:
-                                                                                                   mixComposition]);
-                                                                                         });
-                                                                        }];
-                                          });
-                         }];
+                                                                                            handler([AVPlayerItem
+                                                                                                playerItemWithAsset:
+                                                                                                    mixComposition]);
+                                                                                          });
+                                                                         }];
+                                           });
+                          }];
 
 #endif
 
@@ -912,7 +917,7 @@ static int const RCTVideoUnset = -1;
                  assetOptions:(NSDictionary *__nullable)assetOptions
                  withCallback:(void (^)(AVPlayerItem *))handler {
   if (!_textTracks) {
-//    NSLog(@"FUDGE no text tracks so bye");
+    //    NSLog(@"FUDGE no text tracks so bye");
     handler([AVPlayerItem playerItemWithAsset:asset]);
     return;
   }
@@ -1764,7 +1769,8 @@ static int const RCTVideoUnset = -1;
 }
 
 - (void)removePlayerLayer {
-  if (!_playerLayer) return;
+  if (!_playerLayer)
+    return;
   [_playerLayer removeFromSuperlayer];
   if (_playerLayerObserverSet) {
     [_playerLayer removeObserver:self forKeyPath:readyForDisplayKeyPath];
@@ -1845,10 +1851,10 @@ static int const RCTVideoUnset = -1;
 #pragma mark - Lifecycle
 
 - (void)removeFromSuperview {
-//    NSLog(@"PANTIES REMOVEFROMSUPER inst:%i",thisInst);
-    inView = false;
+  //    NSLog(@"PANTIES REMOVEFROMSUPER inst:%i",thisInst);
+  inView = false;
 
-    [_player pause];
+  [_player pause];
   if (_playbackRateObserverRegistered) {
     [_player removeObserver:self forKeyPath:playbackRate context:nil];
     _playbackRateObserverRegistered = NO;
@@ -1871,6 +1877,11 @@ static int const RCTVideoUnset = -1;
   [[NSNotificationCenter defaultCenter] removeObserver:self];
 
   [super removeFromSuperview];
+}
+
+- (void)sendLoadUpdate:(NSString *)Map {
+  NSLog(@"KING PISS");
+    self.onVideoLoadUpdate(@{@"target" : self.reactTag, @"frag":Map});
 }
 
 @end

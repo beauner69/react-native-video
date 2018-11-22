@@ -67,7 +67,7 @@ class RCTVideo extends RCTView {
       top: "0",
       left: "0",
       width: "100%",
-      height: "100%"
+      height: "100%",
     });
 
     return elem;
@@ -152,13 +152,15 @@ class RCTVideo extends RCTView {
       uri = URL.createObjectURL(blob);
     }
 
-    if (!shaka.Player.isBrowserSupported()) { // primarily iOS WebKit
+    if (!shaka.Player.isBrowserSupported()) {
+      // primarily iOS WebKit
       this.videoElement.setAttribute("src", uri);
       if (!this._paused) {
         this.requestPlay();
       }
     } else {
-      this.player.load(uri)
+      this.player
+        .load(uri)
         .then(() => {
           if (!this._paused) {
             this.requestPlay();
@@ -180,12 +182,12 @@ class RCTVideo extends RCTView {
   onEnd = () => {
     this.onProgress();
     this.sendEvent("topVideoEnd", null);
-    this.stopProgressTimer();    
-  }
+    this.stopProgressTimer();
+  };
 
   onError = error => {
     console.warn("topVideoError", error);
-  }
+  };
 
   onLoad = () => {
     // height & width are safe with audio, will be 0
@@ -197,40 +199,40 @@ class RCTVideo extends RCTView {
       naturalSize: {
         width,
         height,
-        orientation: width >= height ? "landscape" : "portrait"
-      }
+        orientation: width >= height ? "landscape" : "portrait",
+      },
     };
     this.sendEvent("topVideoLoad", payload);
-  }
+  };
 
   onLoadStart = () => {
     const src = this.videoElement.currentSrc;
     const payload = {
       isNetwork: !src.match(/^https?:\/\/localhost/), // require is served from localhost
-      uri: this.videoElement.currentSrc
+      uri: this.videoElement.currentSrc,
     };
     this.sendEvent("topVideoLoadStart", payload);
-  }
+  };
 
   onPause = () => {
     this.stopProgressTimer();
-  }
+  };
 
   onPlay = () => {
     this.startProgressTimer();
-  }
+  };
 
   onProgress = () => {
     const payload = {
       currentTime: this.videoElement.currentTime,
-      seekableDuration: this.videoElement.duration
+      seekableDuration: this.videoElement.duration,
     };
     this.sendEvent("topVideoProgress", payload);
-  }
+  };
 
   onRejectedAutoplay = () => {
     this.sendEvent("topVideoRejectedAutoplay", null);
-  }
+  };
 
   requestPlay() {
     const playPromise = this.videoElement.play();
@@ -255,7 +257,10 @@ class RCTVideo extends RCTView {
   startProgressTimer() {
     if (!this.progressTimer && this._progressUpdateInterval) {
       this.onProgress();
-      this.progressTimer = setInterval(this.onProgress, this._progressUpdateInterval);
+      this.progressTimer = setInterval(
+        this.onProgress,
+        this._progressUpdateInterval
+      );
     }
   }
 

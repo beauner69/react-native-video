@@ -11,6 +11,7 @@
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
 
+@class RCTVideo;
 @class DataRequest;
 @class SingleChunk;
 @class HunkLoad;
@@ -35,7 +36,7 @@ typedef enum : NSUInteger {
 @property (nonatomic) long int highestChunkRequestedSoFar;
 
 
--(id) initWithUrl:(NSURL *)url format:(CALGFormat)format;
+-(id) initWithUrl:(NSURL *)url format:(CALGFormat)format vidview:(RCTVideo*) vidview;
 - (void)chunkFinishedLoading:(SingleChunk*)who fromHunkLoad:(HunkLoad*)hunk;
 
 @end

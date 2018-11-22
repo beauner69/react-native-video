@@ -87,6 +87,12 @@ export default class Video extends Component {
     }
   };
 
+  _onLoadUpdate = event => {
+    if (this.props.onLoadUpdate) {
+      this.props.onLoadUpdate(event.nativeEvent);
+    }
+  };
+
   _onLoad = event => {
     if (this.props.onLoad) {
       this.props.onLoad(event.nativeEvent);
@@ -271,6 +277,7 @@ export default class Video extends Component {
           : {},
       },
       onVideoLoadStart: this._onLoadStart,
+      onVideoLoadUpdate: this._onLoadUpdate,
       onVideoLoad: this._onLoad,
       onVideoError: this._onError,
       onVideoProgress: this._onProgress,
@@ -300,12 +307,11 @@ export default class Video extends Component {
     return (
       <React.Fragment>
         <RCTVideo ref={this._assignRoot} {...nativeProps} />
-        {this.props.poster &&
-          this.state.showPoster && (
-            <View style={nativeProps.style}>
-              <Image style={posterStyle} source={{ uri: this.props.poster }} />
-            </View>
-          )}
+        {this.props.poster && this.state.showPoster && (
+          <View style={nativeProps.style}>
+            <Image style={posterStyle} source={{ uri: this.props.poster }} />
+          </View>
+        )}
       </React.Fragment>
     );
   }
@@ -318,6 +324,7 @@ Video.propTypes = {
   seek: PropTypes.oneOfType([PropTypes.number, PropTypes.object]),
   fullscreen: PropTypes.bool,
   onVideoLoadStart: PropTypes.func,
+  onVideoLoadUpdate: PropTypes.func,
   onVideoLoad: PropTypes.func,
   onVideoBuffer: PropTypes.func,
   onVideoError: PropTypes.func,
@@ -394,6 +401,7 @@ Video.propTypes = {
   progressUpdateInterval: PropTypes.number,
   useTextureView: PropTypes.bool,
   onLoadStart: PropTypes.func,
+  onLoadUpdate: PropTypes.func,
   onLoad: PropTypes.func,
   onBuffer: PropTypes.func,
   onError: PropTypes.func,
