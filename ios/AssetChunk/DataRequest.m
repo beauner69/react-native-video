@@ -26,29 +26,57 @@
         if (_firstChunk >= owner.highestChunkRequestedSoFar) {
 //            NSLog(@"ROGER: RISING %i %i",_firstChunk,owner.highestChunkRequestedSoFar);
             owner.highestChunkRequestedSoFar = _firstChunk;
+            [self GoDemandingSomeChunksStartingFrom:_firstChunk EndingAt:_lastChunk ChunkCount:chunkCount Owner:owner];
+            [owner startLoadingWantedChunks];
         } else {
-//            NSLog(@"ROGER: FALLING %i %i",_firstChunk,owner.highestChunkRequestedSoFar);
+
+            // Make sure we have the basics
             SingleChunk * fosty = owner.chunks[_firstChunk];
-            if (fosty.state == EMPTY) {
+            if (_lastChunk - _firstChunk < 4) {
+                _lastChunk = _firstChunk + 4;
+                if (_lastChunk >= chunkCount) _lastChunk = chunkCount-1;
+            }
+            [self GoDemandingSomeChunksStartingFrom:_firstChunk EndingAt:_lastChunk ChunkCount:chunkCount Owner:owner];
+            [owner startLoadingWantedChunks];
+            
+            // Proactive reading ahead
+#define BIG_BLOCK_SIZE 8
+            long int bigBlock;
+            long int bigBlockStart;
+            long int bigBlockEnd;
+            
+            bigBlock =_lastChunk / BIG_BLOCK_SIZE;
+            bigBlockStart = bigBlock * BIG_BLOCK_SIZE;
+            bigBlockEnd = bigBlockStart + BIG_BLOCK_SIZE - 1;
+            if (bigBlockEnd >= chunkCount) bigBlockEnd = chunkCount-1;
+            
+            [self GoDemandingSomeChunksStartingFrom:bigBlockStart EndingAt:bigBlockEnd ChunkCount:chunkCount Owner:owner];
+            [owner startLoadingWantedChunks];
+            
+            bigBlock = bigBlock + 1;
+            bigBlockStart = bigBlock * BIG_BLOCK_SIZE;
+            bigBlockEnd = bigBlockStart + BIG_BLOCK_SIZE - 1;
+            if (bigBlockStart < chunkCount) {
+                if (bigBlockEnd >= chunkCount) bigBlockEnd = chunkCount-1;
                 
-                if (_lastChunk - _firstChunk < 4) {
-                    _lastChunk = _firstChunk + 4;
-                    if (_lastChunk >= chunkCount) _lastChunk = chunkCount-1;
-                }
+                [self GoDemandingSomeChunksStartingFrom:bigBlockStart EndingAt:bigBlockEnd ChunkCount:chunkCount Owner:owner];
+                [owner startLoadingWantedChunks];
             }
-        }
-        
-        // Make sure the chunks are booked in
-        for (long int n = _firstChunk; n <= _lastChunk; n++) {
-            if (n < chunkCount) {
-                SingleChunk * c = owner.chunks[n];
-                if (c.state == EMPTY) c.state = WANTED;
-            } else {
-                NSLog(@"ERROR ASSETCHUNK - DataRequest is asking for chunks we havent allocated - want = %li max = %li",n,chunkCount);
-            }
+            
         }
     }
     return self;
+}
+
+- (void) GoDemandingSomeChunksStartingFrom:(long int) firstChunk EndingAt:(long int) lastChunk ChunkCount:(long int)chunkCount Owner:(ChunkAssetLoaderDelegate*)owner{
+    for (long int n = firstChunk; n <= lastChunk; n++) {
+        if (n < chunkCount) {
+            SingleChunk * c = owner.chunks[n];
+            if (c.state == EMPTY) c.state = WANTED;
+        } else {
+            NSLog(@"ERROR ASSETCHUNK - DataRequest is asking for chunks we havent allocated - want = %li max = %li",n,chunkCount);
+        }
+    }
 }
 
 - (bool) chanceToSendData:(ChunkAssetLoaderDelegate*)owner{

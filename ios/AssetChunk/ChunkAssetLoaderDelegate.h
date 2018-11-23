@@ -30,6 +30,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, strong) NSMutableArray<DataRequest*> *dataRequests;
 @property (nonatomic, strong) NSMutableArray<SingleChunk*> *chunks;
 @property (nonatomic, strong) NSMutableArray<HunkLoad*> *hunkLoads;
+@property (nonatomic, weak) RCTVideo* vidviewlink;
 
 @property (nonatomic) CALGFormat format;
 @property (nonatomic) long int totalSize;
@@ -38,6 +39,7 @@ typedef enum : NSUInteger {
 
 -(id) initWithUrl:(NSURL *)url format:(CALGFormat)format vidview:(RCTVideo*) vidview;
 - (void)chunkFinishedLoading:(SingleChunk*)who fromHunkLoad:(HunkLoad*)hunk;
+- (void)startLoadingWantedChunks;
 
 @end
 

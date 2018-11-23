@@ -16,7 +16,6 @@
 
 @implementation ChunkAssetLoaderDelegate
 
-RCTVideo *vidviewlink;
 
 - (id)initWithUrl:(NSURL *)url
            format:(CALGFormat)format
@@ -42,7 +41,7 @@ RCTVideo *vidviewlink;
     [_chunks addObject:chunk0];
     chunk0.state = WANTED;
 
-    vidviewlink = vidview;
+    _vidviewlink = vidview;
 
     [self startLoadingWantedChunks];
   }
@@ -237,10 +236,10 @@ RCTVideo *vidviewlink;
       [_chunks addObject:chunk];
     }
 
-    if (_format == VIDEO) {
+//    if (_format == VIDEO) {
       CacheMP4BasedOffChunk(self, who);
       [self startLoadingWantedChunks];
-    }
+//    }
   }
 
   // Allow DataRequests to have a crack at all chunks
@@ -271,15 +270,16 @@ RCTVideo *vidviewlink;
 
 - (void)dealloc {
   // Tell all http requests to DIE
-  vidviewlink = nil;
+    NSLog(@"CALD PISS DEALLOC");
+  _vidviewlink = nil;
   for (HunkLoad *h in _hunkLoads) {
     [h cleanup];
   }
 }
 
 - (void)PrintChunkMap {
-  if (vidviewlink) {
-    if (vidviewlink.onVideoLoadUpdate) {
+  if (_vidviewlink) {
+    if (_vidviewlink.onVideoLoadUpdate) {
       NSMutableString *Map =
           [[NSMutableString alloc] initWithCapacity:[_chunks count]];
       for (long int n = 0; n < [_chunks count]; n++) {
@@ -302,8 +302,8 @@ RCTVideo *vidviewlink;
           break;
         }
       }
-      NSLog(@"CHUNKY CHUNKMAP %@", Map);
-      [vidviewlink sendLoadUpdate:Map];
+//      NSLog(@"CHUNKY CHUNKMAP %@", Map);
+        [_vidviewlink sendLoadUpdate:Map format:_format==VIDEO?@"VIDEO":@"AUDIO"];
     }
   }
 }

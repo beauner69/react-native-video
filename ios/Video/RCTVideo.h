@@ -48,8 +48,8 @@
 
 - (AVPlayerViewController *)createPlayerViewController:(AVPlayer *)player
                                         withPlayerItem:
-                                            (AVPlayerItem *)playerItem;
+                                            (AVPlayerItem *)playerItem ;
 
-- (void)sendLoadUpdate:(NSString *)Map;
+- (void)sendLoadUpdate:(NSString *)Map format:(NSString*)format;
 
 @end

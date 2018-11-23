@@ -359,7 +359,7 @@ static int const RCTVideoUnset = -1;
 
   NSString *uri = [source objectForKey:@"uri"];
 
-#define AUDIO_DO_ASSET_LOADER 0
+#define AUDIO_DO_ASSET_LOADER 1
 
 #if AUDIO_DO_ASSET_LOADER
   audioAssetLoader =
@@ -371,10 +371,10 @@ static int const RCTVideoUnset = -1;
       @{AVURLAssetPreferPreciseDurationAndTimingKey : @YES};
 
   //  NSDictionary *options2 = @{};
-
   AVURLAsset *asset =
-      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
-                          options:options2];
+    [AVURLAsset URLAssetWithURL:[self url:[NSURL URLWithString:uri]
+                         WithCustomScheme:@"pixi"]
+                        options:options2];
   [asset.resourceLoader setDelegate:audioAssetLoader
                               queue:dispatch_get_main_queue()];
 
@@ -1879,9 +1879,9 @@ static int const RCTVideoUnset = -1;
   [super removeFromSuperview];
 }
 
-- (void)sendLoadUpdate:(NSString *)Map {
+- (void)sendLoadUpdate:(NSString *)Map format:(NSString*)format {
   NSLog(@"KING PISS");
-    self.onVideoLoadUpdate(@{@"target" : self.reactTag, @"frag":Map});
+    self.onVideoLoadUpdate(@{@"target" : self.reactTag, @"frag":Map, @"format":format});
 }
 
 @end
