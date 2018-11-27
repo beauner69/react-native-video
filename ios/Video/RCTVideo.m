@@ -80,6 +80,7 @@ static int const RCTVideoUnset = -1;
   ChunkAssetLoaderDelegate *videoAssetLoader;
   ChunkAssetLoaderDelegate *audioAssetLoader;
   int thisInst;
+  BOOL _separateAudioTrack;
 
 #if __has_include(<react-native-video/RCTVideoCache.h>)
   RCTVideoCache *_videoCache;
@@ -111,6 +112,7 @@ static int const RCTVideoUnset = -1;
     _allowsExternalPlayback = YES;
     _playWhenInactive = false;
     _ignoreSilentSwitch = @"inherit"; // inherit, ignore, obey
+    _separateAudioTrack = YES;
 #if __has_include(<react-native-video/RCTVideoCache.h>)
     _videoCache = [RCTVideoCache sharedInstance];
 #endif
@@ -358,6 +360,12 @@ static int const RCTVideoUnset = -1;
 - (void)setAudioSrc:(NSDictionary *)source {
 
   NSString *uri = [source objectForKey:@"uri"];
+    
+    if ([uri isEqualToString:@""]) {
+        _separateAudioTrack = NO;
+        [self crankVideo2];
+        return;
+    }
 
 #define AUDIO_DO_ASSET_LOADER 1
 
@@ -417,9 +425,16 @@ static int const RCTVideoUnset = -1;
   //  uri = @"http://192.168.1.86:8987/piss.mp4";
   // uri = @"http://192.168.2.228:8987/piss.mp4";
 
-#define DO_ASSET_LOADER 1
+    BOOL doAssetLoader = false;
+    
+    NSOperatingSystemVersion ios12 = (NSOperatingSystemVersion){12, 0, 0};
+    if ([[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:ios12]) {
+        doAssetLoader = true;
+    }
+    
+    AVURLAsset *asset;
 
-#if DO_ASSET_LOADER
+    if (doAssetLoader) {
   videoAssetLoader =
       [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]
                                              format:VIDEO
@@ -432,17 +447,17 @@ static int const RCTVideoUnset = -1;
 
   // Change our URL
 
-  AVURLAsset *asset =
+  asset =
       [AVURLAsset URLAssetWithURL:[self url:[NSURL URLWithString:uri]
                                       WithCustomScheme:@"pixi"]
                           options:options2];
   [asset.resourceLoader setDelegate:videoAssetLoader
                               queue:dispatch_get_main_queue()];
 
-#else
-  AVURLAsset *asset =
+    } else {
+  asset =
       [AVURLAsset URLAssetWithURL:[NSURL URLWithString:uri] options:nil];
-#endif
+    }
 
   NSArray *requestedKeys =
       [NSArray arrayWithObjects:@"duration", @"tracks", nil];
@@ -462,7 +477,7 @@ static int const RCTVideoUnset = -1;
   // AUDIO SOURCE BEGIN
 
   // sideload text tracks
-#if (DO_MIX_COMPOSITION)
+    if (_separateAudioTrack) {
 
   AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
 
@@ -489,14 +504,14 @@ static int const RCTVideoUnset = -1;
                             error:nil];
 
   handler([AVPlayerItem playerItemWithAsset:mixComposition]);
-#else
+    } else {
   handler([AVPlayerItem playerItemWithAsset:_videoAsset]);
-#endif
+    }
   return;
 }
 
 - (void)crankVideo2 {
-  if ((_videoAsset == nil) || (_audioAsset == nil)) {
+  if ((_videoAsset == nil) || (_audioAsset == nil && _separateAudioTrack)) {
     return;
   }
   //    NSLog(@"PANTIES CRANK inst:%i",thisInst);
@@ -1280,6 +1295,10 @@ static int const RCTVideoUnset = -1;
   _player.allowsExternalPlayback = _allowsExternalPlayback;
 }
 
+- (void)setSendLoadUpdate:(BOOL)sendLoadUpdate {
+  _sendLoadUpdate = sendLoadUpdate;
+}
+
 - (void)setPlayWhenInactive:(BOOL)playWhenInactive {
   _playWhenInactive = playWhenInactive;
 }
@@ -1879,9 +1898,11 @@ static int const RCTVideoUnset = -1;
   [super removeFromSuperview];
 }
 
-- (void)sendLoadUpdate:(NSString *)Map format:(NSString*)format {
-  NSLog(@"KING PISS");
-    self.onVideoLoadUpdate(@{@"target" : self.reactTag, @"frag":Map, @"format":format});
+- (void)performSendLoadUpdate:(NSString *)Map format:(NSString*)format {
+//  NSLog(@"KING PISS");
+    if (self.onVideoLoadUpdate) {
+          self.onVideoLoadUpdate(@{@"target" : self.reactTag, @"frag":Map, @"format":format});
+    }
 }
 
 @end

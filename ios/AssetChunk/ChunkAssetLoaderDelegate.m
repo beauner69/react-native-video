@@ -279,7 +279,7 @@
 
 - (void)PrintChunkMap {
   if (_vidviewlink) {
-    if (_vidviewlink.onVideoLoadUpdate) {
+    if (_vidviewlink.sendLoadUpdate) {
       NSMutableString *Map =
           [[NSMutableString alloc] initWithCapacity:[_chunks count]];
       for (long int n = 0; n < [_chunks count]; n++) {
@@ -303,7 +303,7 @@
         }
       }
 //      NSLog(@"CHUNKY CHUNKMAP %@", Map);
-        [_vidviewlink sendLoadUpdate:Map format:_format==VIDEO?@"VIDEO":@"AUDIO"];
+        [_vidviewlink performSendLoadUpdate:Map format:_format==VIDEO?@"VIDEO":@"AUDIO"];
     }
   }
 }

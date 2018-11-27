@@ -42,6 +42,8 @@
 @property(nonatomic, copy) RCTBubblingEventBlock onPlaybackRateChange;
 @property(nonatomic, copy) RCTBubblingEventBlock onVideoExternalPlaybackChange;
 @property(nonatomic, copy) RCTBubblingEventBlock onVideoLoadUpdate;
+@property (nonatomic) bool sendLoadUpdate;
+
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
     NS_DESIGNATED_INITIALIZER;
@@ -50,6 +52,6 @@
                                         withPlayerItem:
                                             (AVPlayerItem *)playerItem ;
 
-- (void)sendLoadUpdate:(NSString *)Map format:(NSString*)format;
+- (void)performSendLoadUpdate:(NSString *)Map format:(NSString*)format;
 
 @end
