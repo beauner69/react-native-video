@@ -135,8 +135,6 @@ class ReactExoplayerView extends FrameLayout implements
     private boolean disableFocus;
     private float mProgressUpdateInterval = 250.0f;
     private boolean playInBackground = false;
-    private boolean useTextureView = false;
-    private boolean hideShutterView = false;
     private Map<String, String> requestHeaders;
     // \ End props
 
