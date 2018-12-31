@@ -39,6 +39,7 @@ static int const RCTVideoUnset = -1;
 
   AVPlayer *_player;
   AVPlayerItem *_playerItem;
+  NSDictionary *_source;
   BOOL _playerItemObserversSet;
   BOOL _playerBufferEmpty;
   AVPlayerLayer *_playerLayer;
@@ -83,6 +84,7 @@ static int const RCTVideoUnset = -1;
   NSString * _fullscreenOrientation;
   BOOL _fullscreenPlayerPresented;
   NSString *_filterName;
+  BOOL _filterEnabled;
   UIViewController * _presentingViewController;
 #if __has_include(<react-native-video/RCTVideoCache.h>)
   RCTVideoCache * _videoCache;
@@ -346,6 +348,8 @@ static int const RCTVideoUnset = -1;
 
 - (void)setSrc:(NSDictionary *)source
 {
+  _source = source;
+
   // ZEROLABS - setSRC has massively changed.
 
   //    NSLog(@"PANTIES VAL EXISTS=%@
@@ -1729,18 +1733,18 @@ static int const RCTVideoUnset = -1;
 
 - (void)setFilter:(NSString *)filterName {
     _filterName = filterName;
-    AVAsset *asset = _playerItem.asset;
-    
-    if (!asset) {
-        return;
-    } else if (!_playerItem.videoComposition && (filterName == nil || [filterName isEqualToString:@""])) {
-        return; // Setting up an empty filter has a cost so avoid whenever possible
-    }
-    // TODO: filters don't work for HLS, check & return
 
+    if (!_filterEnabled) {
+        return;
+    } else if ([[_source objectForKey:@"uri"] rangeOfString:@"m3u8"].location != NSNotFound) {
+        return; // filters don't work for HLS... return
+    } else if (!_playerItem.asset) {
+        return;
+    }
+    
     CIFilter *filter = [CIFilter filterWithName:filterName];
     _playerItem.videoComposition = [AVVideoComposition
-                                    videoCompositionWithAsset:asset
+                                    videoCompositionWithAsset:_playerItem.asset
                                     applyingCIFiltersWithHandler:^(AVAsynchronousCIImageFilteringRequest *_Nonnull request) {
         if (filter == nil) {
             [request finishWithImage:request.sourceImage context:nil];
@@ -1751,6 +1755,10 @@ static int const RCTVideoUnset = -1;
             [request finishWithImage:output context:nil];
         }
     }];
+}
+
+- (void)setFilterEnabled:(BOOL)filterEnabled {
+  _filterEnabled = filterEnabled;
 }
 
 #pragma mark - React View Management
