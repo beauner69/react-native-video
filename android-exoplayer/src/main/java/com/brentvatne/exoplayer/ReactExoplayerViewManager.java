@@ -62,6 +62,7 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     private static final String PROP_SELECTED_VIDEO_TRACK_TYPE = "type";
     private static final String PROP_SELECTED_VIDEO_TRACK_VALUE = "value";
     private static final String PROP_HIDE_SHUTTER_VIEW = "hideShutterView";
+    private static final String PROP_CONTROLS = "controls";
 
     @Override
     public String getName() {
@@ -287,6 +288,11 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
     @ReactProp(name = PROP_HIDE_SHUTTER_VIEW, defaultBoolean = false)
     public void setHideShutterView(final ReactExoplayerView videoView, final boolean hideShutterView) {
         videoView.setHideShutterView(hideShutterView);
+    }
+
+    @ReactProp(name = PROP_CONTROLS, defaultBoolean = false)
+    public void setControls(final ReactExoplayerView videoView, final boolean controls) {
+        videoView.setControls(controls);
     }
 
     @ReactProp(name = PROP_BUFFER_CONFIG)
