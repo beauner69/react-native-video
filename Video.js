@@ -217,6 +217,13 @@ export default class Video extends Component {
     }
   };
 
+  getViewManagerConfig = viewManagerName => {
+    if (!UIManager.getViewManagerConfig) {
+      return UIManager[viewManagerName];
+    }
+    return UIManager.getViewManagerConfig(viewManagerName);
+  };
+
   render() {
     const resizeMode = this.props.resizeMode;
     const source = resolveAssetSource(this.props.source) || {};
@@ -239,14 +246,16 @@ export default class Video extends Component {
     // ZEROLABS END
 
     let nativeResizeMode;
+    const RCTVideoInstance = this.getViewManagerConfig('RCTVideo');
+
     if (resizeMode === VideoResizeMode.stretch) {
-      nativeResizeMode = NativeModules.UIManager.RCTVideo.Constants.ScaleToFill;
+      nativeResizeMode = RCTVideoInstance.Constants.ScaleToFill;
     } else if (resizeMode === VideoResizeMode.contain) {
-      nativeResizeMode = NativeModules.UIManager.RCTVideo.Constants.ScaleAspectFit;
+      nativeResizeMode = RCTVideoInstance.Constants.ScaleAspectFit;
     } else if (resizeMode === VideoResizeMode.cover) {
-      nativeResizeMode = NativeModules.UIManager.RCTVideo.Constants.ScaleAspectFill;
+      nativeResizeMode = RCTVideoInstance.Constants.ScaleAspectFill;
     } else {
-      nativeResizeMode = NativeModules.UIManager.RCTVideo.Constants.ScaleNone;
+      nativeResizeMode = RCTVideoInstance.Constants.ScaleNone;
     }
 
     const nativeProps = Object.assign({}, this.props);
