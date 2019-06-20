@@ -22,8 +22,7 @@ android {
 }
 
 dependencies {
-    compileOnly "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
-    // ZL: CHANGED TO VERSION 2.9.6
+    implementation "com.facebook.react:react-native:${safeExtGet('reactNativeVersion', '+')}"
     implementation('com.google.android.exoplayer:exoplayer:2.9.6') {
         exclude group: 'com.android.support'
     }
