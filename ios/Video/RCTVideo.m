@@ -5,6 +5,7 @@
 #import <React/UIView+React.h>
 #include <MediaAccessibility/MediaAccessibility.h>
 #include <AVFoundation/AVFoundation.h>
+#import "ChunkAssetLoaderDelegate.h" // ZEROLABS
 
 static NSString *const statusKeyPath = @"status";
 static NSString *const playbackLikelyToKeepUpKeyPath = @"playbackLikelyToKeepUp";
@@ -24,6 +25,18 @@ static int const RCTVideoUnset = -1;
 
 @implementation RCTVideo
 {
+  // ZEROLABS Start
+  NSDictionary * _theSource;
+  NSDictionary * _theAudioSource;
+  AVURLAsset * _audioAsset;
+  AVURLAsset * _videoAsset;
+  BOOL inView; // We are here
+  ChunkAssetLoaderDelegate * videoAssetLoader;
+  ChunkAssetLoaderDelegate * audioAssetLoader;
+  int thisInst;
+  BOOL _separateAudioTrack;
+  // ZEROLABS END
+
   AVPlayer *_player;
   AVPlayerItem *_playerItem;
   BOOL _playerItemObserversSet;
@@ -74,8 +87,13 @@ static int const RCTVideoUnset = -1;
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher
 {
+  static int instid = 0; // ZEROLABS
+
   if ((self = [super init])) {
     _eventDispatcher = eventDispatcher;
+    thisInst = instid++;  // ZEROLABS
+    inView = true;  // ZEROLABS
+    _separateAudioTrack = YES;  // ZEROLABS
     
     _playbackRateObserverRegistered = NO;
     _isExternalPlaybackActiveObserverRegistered = NO;
@@ -323,6 +341,176 @@ static int const RCTVideoUnset = -1;
 
 - (void)setSrc:(NSDictionary *)source
 {
+  // ZEROLABS - setSRC has massively changed.
+
+  //    NSLog(@"PANTIES VAL EXISTS=%@
+  //    inst:%i",videoAssetLoader?@"YES":@"NO",thisInst);
+  // Start loading it immediately
+  NSString *uri = [source objectForKey:@"uri"];
+  //  uri = @"http://192.168.1.86:8987/piss.mp4";
+  // uri = @"http://192.168.2.228:8987/piss.mp4";
+
+    BOOL doAssetLoader = false;
+    
+    NSOperatingSystemVersion ios12 = (NSOperatingSystemVersion){12, 0, 0};
+    if ([[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:ios12]) {
+        doAssetLoader = true;
+    }
+    
+    AVURLAsset *asset;
+
+    if (doAssetLoader) {
+  videoAssetLoader =
+      [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]
+                                             format:VIDEO
+                                            vidview:self];
+
+  NSDictionary *options2 =
+      @{AVURLAssetPreferPreciseDurationAndTimingKey: @YES};
+
+  //  NSDictionary *options2 = @{};
+
+  // Change our URL
+
+  asset =
+      [AVURLAsset URLAssetWithURL:[self url:[NSURL URLWithString:uri]
+                                      WithCustomScheme:@"pixi"]
+                          options:options2];
+  [asset.resourceLoader setDelegate:videoAssetLoader
+                              queue:dispatch_get_main_queue()];
+
+    } else {
+  asset =
+      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:uri] options:nil];
+    }
+
+  NSArray *requestedKeys =
+      [NSArray arrayWithObjects:@"duration", @"tracks", nil];
+
+  [asset loadValuesAsynchronouslyForKeys:requestedKeys
+                       completionHandler:^{
+                         dispatch_async(dispatch_get_main_queue(), ^{
+                           _videoAsset = asset;
+                           [self crankVideo2];
+                         });
+                       }];
+}
+
+// ZEROLABS method
+- (void)setAudioSrc:(NSDictionary *)source 
+{
+
+  NSString *uri = [source objectForKey:@"uri"];
+    
+    if ([uri isEqualToString:@""]) {
+        _separateAudioTrack = NO;
+        [self crankVideo2];
+        return;
+    }
+
+#define AUDIO_DO_ASSET_LOADER 1
+
+#if AUDIO_DO_ASSET_LOADER
+  audioAssetLoader =
+      [[ChunkAssetLoaderDelegate alloc] initWithUrl:[NSURL URLWithString:uri]
+                                             format:AUDIO
+                                            vidview:self];
+
+  NSDictionary *options2 =
+      @{AVURLAssetPreferPreciseDurationAndTimingKey: @YES};
+
+  //  NSDictionary *options2 = @{};
+  AVURLAsset *asset =
+    [AVURLAsset URLAssetWithURL:[self url:[NSURL URLWithString:uri]
+                         WithCustomScheme:@"pixi"]
+                        options:options2];
+  [asset.resourceLoader setDelegate:audioAssetLoader
+                              queue:dispatch_get_main_queue()];
+
+#else
+  NSDictionary *options2 =
+      @{AVURLAssetPreferPreciseDurationAndTimingKey: @YES};
+
+  AVURLAsset *asset =
+      [AVURLAsset URLAssetWithURL:[NSURL URLWithString:uri] options:options2];
+#endif
+
+  NSArray *requestedKeys =
+      [NSArray arrayWithObjects:@"duration", @"tracks", nil];
+
+  [asset loadValuesAsynchronouslyForKeys:requestedKeys
+                       completionHandler:^{
+                         dispatch_async(dispatch_get_main_queue(), ^{
+                           _audioAsset = asset;
+                           [self crankVideo2];
+                         });
+                       }];
+
+  // Old way:
+  //    _theAudioSource = source;
+  //  [self crankVideo];
+}
+
+// ZEROLABS method
+- (NSURL *)url:(NSURL *)url WithCustomScheme:(NSString *)scheme {
+  NSURLComponents *components =
+      [[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO];
+  components.scheme = scheme;
+  return [components URL];
+}
+
+// ZEROLABS method
+- (void)playerItemFromReadyAssets:(void (^)(AVPlayerItem *))handler {
+
+#define DO_MIX_COMPOSITION 1
+  // AUDIO SOURCE BEGIN
+
+  // sideload text tracks
+    if (_separateAudioTrack) {
+
+  AVMutableComposition *mixComposition = [[AVMutableComposition alloc] init];
+
+  AVAssetTrack *videoTrack =
+      [_videoAsset tracksWithMediaType:AVMediaTypeVideo].firstObject;
+  AVMutableCompositionTrack *videoCompTrack = [mixComposition
+      addMutableTrackWithMediaType:AVMediaTypeVideo
+                  preferredTrackID:kCMPersistentTrackID_Invalid];
+  [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+                                                  videoTrack.timeRange.duration)
+                          ofTrack:videoTrack
+                           atTime:kCMTimeZero
+                            error:nil];
+
+  AVAssetTrack *audioTrack =
+      [_audioAsset tracksWithMediaType:AVMediaTypeAudio].firstObject;
+  AVMutableCompositionTrack *audioCompTrack = [mixComposition
+      addMutableTrackWithMediaType:AVMediaTypeAudio
+                  preferredTrackID:kCMPersistentTrackID_Invalid];
+  [audioCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+                                                  audioTrack.timeRange.duration)
+                          ofTrack:audioTrack
+                           atTime:kCMTimeZero
+                            error:nil];
+
+  handler([AVPlayerItem playerItemWithAsset:mixComposition]);
+    } else {
+  handler([AVPlayerItem playerItemWithAsset:_videoAsset]);
+    }
+  return;
+}
+
+// ZEROLABS method - varied from original setSrc.
+- (void)crankVideo2 {
+  if ((_videoAsset == nil) || (_audioAsset == nil && _separateAudioTrack)) {
+    return;
+  }
+  //    NSLog(@"PANTIES CRANK inst:%i",thisInst);
+
+  if (!inView) {
+    //        NSLog(@"PANTIES FUCK ME <=-=----= %i",thisInst);
+    return;
+  }
+
   [self removePlayerLayer];
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
@@ -330,7 +518,7 @@ static int const RCTVideoUnset = -1;
   dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) 0), dispatch_get_main_queue(), ^{
 
     // perform on next run loop, otherwise other passed react-props may not be set
-    [self playerItemForSource:source withCallback:^(AVPlayerItem * playerItem) {
+    [self playerItemFromReadyAssets:^(AVPlayerItem * playerItem) { // ZEROLABS
       _playerItem = playerItem;
       [self addPlayerItemObservers];
       
@@ -360,18 +548,101 @@ static int const RCTVideoUnset = -1;
 
       //Perform on next run loop, otherwise onVideoLoadStart is nil
       if (self.onVideoLoadStart) {
-        id uri = [source objectForKey:@"uri"];
-        id type = [source objectForKey:@"type"];
+        // ZEROLABS - souce => _theSource
+       id uri = [_theSource objectForKey:@"uri"];
+        id type = [_theSource objectForKey:@"type"];
         self.onVideoLoadStart(@{@"src": @{
                                         @"uri": uri ? uri : [NSNull null],
                                         @"type": type ? type : [NSNull null],
-                                        @"isNetwork": [NSNumber numberWithBool:(bool)[source objectForKey:@"isNetwork"]]},
+                                        @"isNetwork": [NSNumber numberWithBool:(bool)[_theSource objectForKey:@"isNetwork"]]}, // ZEROLABS              
                                     @"target": self.reactTag
                                 });
       }
     }];
   });
   _videoLoadStarted = YES;
+}
+
+// ZEROLABS method
+- (void)crankVideo {
+  if ((_theSource == nil) || (_theAudioSource == nil)) {
+    return;
+  }
+  [self removePlayerLayer];
+  [self removePlayerTimeObserver];
+  [self removePlayerItemObservers];
+
+  dispatch_after(
+      dispatch_time(DISPATCH_TIME_NOW, (int64_t)0), dispatch_get_main_queue(),
+      ^{
+        // perform on next run loop, otherwise other passed react-props may not
+        // be set
+        [self
+            playerItemForSource:_theSource
+                      withAudio:_theAudioSource
+                   withCallback:^(AVPlayerItem *playerItem) {
+                     _playerItem = playerItem;
+                     [self addPlayerItemObservers];
+
+                     [_player pause];
+                     [_playerViewController.view removeFromSuperview];
+                     _playerViewController = nil;
+
+                     if (_playbackRateObserverRegistered) {
+                       [_player removeObserver:self
+                                    forKeyPath:playbackRate
+                                       context:nil];
+                       _playbackRateObserverRegistered = NO;
+                     }
+                     if (_isExternalPlaybackActiveObserverRegistered) {
+                       [_player removeObserver:self
+                                    forKeyPath:externalPlaybackActive
+                                       context:nil];
+                       _isExternalPlaybackActiveObserverRegistered = NO;
+                     }
+
+                     _player = [AVPlayer playerWithPlayerItem:_playerItem];
+                     _player.actionAtItemEnd = AVPlayerActionAtItemEndNone;
+
+                     [_player addObserver:self
+                               forKeyPath:playbackRate
+                                  options:0
+                                  context:nil];
+                     _playbackRateObserverRegistered = YES;
+
+                     [_player addObserver:self
+                               forKeyPath:externalPlaybackActive
+                                  options:0
+                                  context:nil];
+                     _isExternalPlaybackActiveObserverRegistered = YES;
+
+                     [self addPlayerTimeObserver];
+
+                     // Perform on next run loop, otherwise onVideoLoadStart is
+                     // nil
+                     if (self.onVideoLoadStart) {
+                       id uri = [_theSource objectForKey:@"uri"];
+                       id type = [_theSource objectForKey:@"type"];
+                       self.onVideoLoadStart(@{
+                         @"src": @{
+                           @"uri": uri ? uri: [NSNull null],
+                           @"type": type ? type: [NSNull null],
+                           @"isNetwork": [NSNumber
+                               numberWithBool:(bool)[_theSource
+                                                  objectForKey:@"isNetwork"]]
+                         },
+                         @"target": self.reactTag // ZL
+                       }); // ZL
+                     } // ZL
+                   }]; // ZL
+      }); // ZL
+  _videoLoadStarted = YES; // ZL
+}
+
+// ZEROLABS METHOD
+- (void)setSendLoadUpdate:(BOOL)sendLoadUpdate 
+{
+  _sendLoadUpdate = sendLoadUpdate;
 }
 
 - (NSURL*) urlFilePath:(NSString*) filepath {
@@ -446,11 +717,15 @@ static int const RCTVideoUnset = -1;
   handler([AVPlayerItem playerItemWithAsset:mixComposition]);
 }
 
-- (void)playerItemForSource:(NSDictionary *)source withCallback:(void(^)(AVPlayerItem *))handler
-{
+// ZEROLABS method
+- (void)playerItemForSource:(NSDictionary *)source
+                  withAudio:(NSDictionary *)audio // NEW
+               withCallback:(void (^)(AVPlayerItem *))handler {
   bool isNetwork = [RCTConvert BOOL:[source objectForKey:@"isNetwork"]];
   bool isAsset = [RCTConvert BOOL:[source objectForKey:@"isAsset"]];
   NSString *uri = [source objectForKey:@"uri"];
+  NSString *audioUri = [audio objectForKey:@"uri"]; // ZL
+  uri = @"http://192.168.2.228:8987/piss.mp4"; // ZL
   NSString *type = [source objectForKey:@"type"];
 
   NSURL *url = isNetwork || isAsset
@@ -481,8 +756,180 @@ static int const RCTVideoUnset = -1;
     }
 #endif
 
-    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:assetOptions];
-    [self playerItemPrepareText:asset assetOptions:assetOptions withCallback:handler];
+#define DO_ASSET_LOADER 0
+
+#if DO_ASSET_LOADER
+    _assetLoader = [[ChunkAssetLoaderDelegate alloc] initWithUrl];
+    _assetLoader.fileUrl = uri; // S3 url in this case
+
+    //      NSDictionary *options2 =
+    //      @{AVURLAssetPreferPreciseDurationAndTimingKey: @YES};
+
+    NSDictionary *options2 = @{};
+
+    AVURLAsset *asset =
+        [AVURLAsset URLAssetWithURL:[NSURL URLWithString:@"piss:poagkhsdkgjh"]
+                            //        URLAssetWithURL:[self url:url
+                            //        WithCustomScheme:@"pixi"]
+                            options:options2];
+    [asset.resourceLoader setDelegate:_assetLoader
+                                queue:dispatch_get_main_queue()];
+
+#else
+    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
+#endif
+
+#define DO_MIX_COMPOSITION 1
+    // AUDIO SOURCE BEGIN
+
+    // sideload text tracks
+#if (DO_MIX_COMPOSITION)
+
+    NSArray *requestedKeys =
+        [NSArray arrayWithObjects:@"duration", @"tracks", nil];
+
+    [asset
+        loadValuesAsynchronouslyForKeys:requestedKeys
+                      completionHandler:
+                          ^{
+                            dispatch_async(dispatch_get_main_queue(),
+                                           ^{
+                                             AVURLAsset *audioAss = [AVURLAsset
+                                                 URLAssetWithURL:
+                                                     [NSURL
+                                                         URLWithString:audioUri]
+                                                         options:nil];
+
+                                             [audioAss loadValuesAsynchronouslyForKeys:
+                                                           requestedKeys
+                                                                     completionHandler:
+                                                                         ^{
+                                                                           dispatch_async(dispatch_get_main_queue(),
+                                                                                          ^{
+                                                                                            AVMutableComposition
+                                                                                                *mixComposition =
+                                                                                                    [[AVMutableComposition
+                                                                                                        alloc]
+                                                                                                        init];
+
+                                                                                            AVAssetTrack *videoAsset =
+                                                                                                [asset
+                                                                                                    tracksWithMediaType:
+                                                                                                        AVMediaTypeVideo]
+                                                                                                    .firstObject;
+                                                                                            AVMutableCompositionTrack
+                                                                                                *videoCompTrack = [mixComposition
+                                                                                                    addMutableTrackWithMediaType:
+                                                                                                        AVMediaTypeVideo
+                                                                                                                preferredTrackID:
+                                                                                                                    kCMPersistentTrackID_Invalid];
+                                                                                            [videoCompTrack
+                                                                                                insertTimeRange:
+                                                                                                    CMTimeRangeMake(
+                                                                                                        kCMTimeZero,
+                                                                                                        videoAsset
+                                                                                                            .timeRange
+                                                                                                            .duration)
+                                                                                                        ofTrack:
+                                                                                                            videoAsset
+                                                                                                         atTime:
+                                                                                                             kCMTimeZero
+                                                                                                          error:
+                                                                                                              nil];
+
+                                                                                            AVAssetTrack *audioAsset =
+                                                                                                [audioAss
+                                                                                                    tracksWithMediaType:
+                                                                                                        AVMediaTypeAudio]
+                                                                                                    .firstObject;
+                                                                                            AVMutableCompositionTrack
+                                                                                                *audioCompTrack = [mixComposition
+                                                                                                    addMutableTrackWithMediaType:
+                                                                                                        AVMediaTypeAudio
+                                                                                                                preferredTrackID:
+                                                                                                                    kCMPersistentTrackID_Invalid];
+                                                                                            [audioCompTrack
+                                                                                                insertTimeRange:
+                                                                                                    CMTimeRangeMake(
+                                                                                                        kCMTimeZero,
+                                                                                                        videoAsset
+                                                                                                            .timeRange
+                                                                                                            .duration)
+                                                                                                        ofTrack:
+                                                                                                            audioAsset
+                                                                                                         atTime:
+                                                                                                             kCMTimeZero
+                                                                                                          error:
+                                                                                                              nil];
+
+                                                                                            handler([AVPlayerItem
+                                                                                                playerItemWithAsset:
+                                                                                                    mixComposition]);
+                                                                                          });
+                                                                         }];
+                                           });
+                          }];
+
+#endif
+
+    //      NSDictionary *urlAssetOptions =
+    //      @{AVURLAssetPreferPreciseDurationAndTimingKey: [NSNumber
+    //      numberWithBool:NO]};
+    //
+    //      AVMutableComposition *composition = [AVMutableComposition
+    //      composition];
+    //
+    //
+    ////      NSLog(@"CHICKEN URL:%@",[audio objectForKey:@"uri"]);
+    ////      NSURL *audioUrl = [NSURL URLWithString:[audio
+    /// objectForKey:@"uri"]]; /      AVURLAsset *audioAsset = [AVURLAsset
+    /// URLAssetWithURL:audioUrl options:urlAssetOptions];
+    ////
+    ////      AVMutableCompositionTrack *audioTrack = [composition
+    /// addMutableTrackWithMediaType:AVMediaTypeAudio
+    /// preferredTrackID:kCMPersistentTrackID_Invalid]; /      [audioTrack
+    /// insertTimeRange:CMTimeRangeMake(kCMTimeZero, audioAsset.duration)
+    /// ofTrack:[[audioAsset tracksWithMediaType:AVMediaTypeAudio]
+    /// objectAtIndex:0] atTime:kCMTimeZero error:nil];
+    //
+    //
+    ////      NSURL *videoUrl = [NSURL URLWithString:@"http://..."];
+    ////      AVURLAsset *videoAsset = [AVURLAsset URLAssetWithURL:videoUrl
+    /// options:urlAssetOptions];
+    //
+    //      AVMutableCompositionTrack *videoTrack = [composition
+    //      addMutableTrackWithMediaType:AVMediaTypeVideo
+    //      preferredTrackID:kCMPersistentTrackID_Invalid]; [videoTrack
+    //      insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+    //      videoAsset.timeRangeduration) ofTrack:[[videoAsset
+    //      tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0]
+    //      atTime:kCMTimeZero error:nil];
+    //
+    //      AVMutableCompositionTrack *videoCompTrack = [mixComposition
+    //                                                   addMutableTrackWithMediaType:AVMediaTypeVideo
+    //                                                   preferredTrackID:kCMPersistentTrackID_Invalid];
+    //      [videoCompTrack insertTimeRange:CMTimeRangeMake(kCMTimeZero,
+    //                                                      videoAsset.timeRange.duration)
+    //                              ofTrack:videoAsset
+    //                               atTime:kCMTimeZero
+    //                                error:nil];
+    //
+    //
+
+    //      AVPlayerItem *playerItem = [AVPlayerItem
+    //      playerItemWithAsset:composition];
+
+    // AUDIO SOURCE END
+
+    // [self playerItemPrepareText:asset
+    //                assetOptions:assetOptions
+    //                withCallback:handler];
+
+#if (DO_MIX_COMPOSITION)
+    //    handler([AVPlayerItem playerItemWithAsset:mixComposition]);
+#else
+    handler([AVPlayerItem playerItemWithAsset:asset]);
+#endif
     return;
   } else if (isAsset) {
     AVURLAsset *asset = [AVURLAsset URLAssetWithURL:url options:nil];
@@ -1220,6 +1667,9 @@ static int const RCTVideoUnset = -1;
 
 - (void)removePlayerLayer
 {
+  // ZEROLABS 1-liner
+  if (!_playerLayer) return;
+
   [_playerLayer removeFromSuperlayer];
   if (_playerLayerObserverSet) {
     [_playerLayer removeObserver:self forKeyPath:readyForDisplayKeyPath];
@@ -1313,6 +1763,8 @@ static int const RCTVideoUnset = -1;
 
 - (void)removeFromSuperview
 {
+  inView = false; // ZEROLABS
+
   [_player pause];
   if (_playbackRateObserverRegistered) {
     [_player removeObserver:self forKeyPath:playbackRate context:nil];
@@ -1336,6 +1788,13 @@ static int const RCTVideoUnset = -1;
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   
   [super removeFromSuperview];
+}
+
+// ZEROLABS method
+- (void)performSendLoadUpdate:(NSString *)Map format:(NSString*)format {
+    if (self.onVideoLoadUpdate) {
+          self.onVideoLoadUpdate(@{@"target": self.reactTag, @"frag":Map, @"format":format});
+    }
 }
 
 @end

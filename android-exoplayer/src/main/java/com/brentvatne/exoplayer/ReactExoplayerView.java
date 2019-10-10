@@ -115,6 +115,10 @@ class ReactExoplayerView extends FrameLayout implements
     private int bufferForPlaybackMs = DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS;
     private int bufferForPlaybackAfterRebufferMs = DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS;
 
+  // ZEROLABS props
+  private Uri audioSrcUri;
+  private String audioExtension;
+
     // Props from React
     private Uri srcUri;
     private String extension;
@@ -261,7 +265,20 @@ class ReactExoplayerView extends FrameLayout implements
             MediaSource videoSource = buildMediaSource(srcUri, extension);
             MediaSource mediaSource;
             if (mediaSourceList.size() == 0) {
+
+        // ZEROLABS START
+        // Our merge-video-and-audio hack
+        if (audioSrcUri != null) {
+          // Gotta merge them both
+          MediaSource audioSource =
+              buildMediaSource(audioSrcUri, audioExtension);
+          MediaSource[] mergeCollection = {videoSource, audioSource};
+          mediaSource = new MergingMediaSource(mergeCollection);
+        } else {
+          // default behaviour
+          // ZEROLABS END
                 mediaSource = videoSource;
+        } // ZL
             } else {
                 mediaSourceList.add(0, videoSource);
                 MediaSource[] textSourceArray = mediaSourceList.toArray(
@@ -699,6 +716,26 @@ class ReactExoplayerView extends FrameLayout implements
     }
 
     // ReactExoplayerViewManager public api
+
+  // ZEROLABS method
+  public void setAudioSrc(final Uri uri, final String extension,
+                          Map<String, String> headers) {
+    if (uri != null) {
+      boolean isOriginalSourceNull = audioSrcUri == null;
+      boolean isSourceEqual = uri.equals(audioSrcUri);
+
+      this.audioSrcUri = uri;
+      this.audioExtension = extension;
+      // this.requestHeaders = headers;
+      // this.mediaDataSourceFactory =
+      // DataSourceUtil.getDefaultDataSourceFactory(
+      //     this.themedReactContext, BANDWIDTH_METER, this.requestHeaders);
+
+      if (!isOriginalSourceNull && !isSourceEqual) {
+        reloadSource();
+      }
+    }
+  }
 
     public void setSrc(final Uri uri, final String extension, Map<String, String> headers) {
         if (uri != null) {

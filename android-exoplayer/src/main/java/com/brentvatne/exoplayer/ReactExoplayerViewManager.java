@@ -1,5 +1,7 @@
 package com.brentvatne.exoplayer;
 
+import android.util.Log; // ZEROLABS
+
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -20,6 +22,9 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerView> {
+
+  // ZEROLABS
+  private static final String PROP_AUDIO_SRC = "audioSrc";
 
     private static final String REACT_CLASS = "RCTVideo";
 
@@ -125,6 +130,35 @@ public class ReactExoplayerViewManager extends ViewGroupManager<ReactExoplayerVi
             }
         }
     }
+
+  // ZEROLABS METHOD
+  @ReactProp(name = PROP_AUDIO_SRC)
+  public void setAudioSrc(final ReactExoplayerView videoView,
+                          @Nullable ReadableMap src) {
+    Context context = videoView.getContext().getApplicationContext();
+    String uriString =
+        src.hasKey(PROP_SRC_URI) ? src.getString(PROP_SRC_URI) : null;
+    String extension =
+        src.hasKey(PROP_SRC_TYPE) ? src.getString(PROP_SRC_TYPE) : null;
+    Map<String, String> headers =
+        src.hasKey(PROP_SRC_HEADERS) ? toStringMap(src.getMap(PROP_SRC_HEADERS))
+                                     : null;
+
+    if (TextUtils.isEmpty(uriString)) {
+      return;
+    }
+
+    if (startsWithValidScheme(uriString)) {
+      Uri srcUri = Uri.parse(uriString);
+
+      if (srcUri != null) {
+        videoView.setAudioSrc(srcUri, extension, headers);
+      }
+    } else {
+      Log.e("ReactExoPlayerViewManager",
+            "Video audio - from asset not supported, go for it");
+    }
+  }
 
     @ReactProp(name = PROP_RESIZE_MODE)
     public void setResizeMode(final ReactExoplayerView videoView, final String resizeModeOrdinalString) {

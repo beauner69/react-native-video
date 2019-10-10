@@ -1,7 +1,8 @@
 #import "RCTVideoManager.h"
 #import "RCTVideo.h"
-#import <React/RCTBridge.h>
+// ZEROLABS: AVFoundation moved up for some reason
 #import <AVFoundation/AVFoundation.h>
+#import <React/RCTBridge.h>
 
 @implementation RCTVideoManager
 
@@ -18,6 +19,12 @@ RCT_EXPORT_MODULE();
 {
     return dispatch_get_main_queue();
 }
+
+// ZEROLABS begin
+RCT_EXPORT_VIEW_PROPERTY(audioSrc, NSDictionary);
+RCT_EXPORT_VIEW_PROPERTY(sendLoadUpdate, BOOL);
+RCT_EXPORT_VIEW_PROPERTY(onVideoLoadUpdate, RCTBubblingEventBlock);
+// ZEROLABS end
 
 RCT_EXPORT_VIEW_PROPERTY(src, NSDictionary);
 RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString);

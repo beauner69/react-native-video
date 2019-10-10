@@ -1,5 +1,6 @@
-#import <Foundation/Foundation.h>
+// ZEROLABS: Put AVKit first for some reason
 #import "AVKit/AVKit.h"
+#import <Foundation/Foundation.h>
 
 @protocol RCTVideoPlayerViewControllerDelegate <NSObject>
 - (void)videoPlayerViewControllerWillDismiss:(AVPlayerViewController *)playerViewController;
