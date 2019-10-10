@@ -6,9 +6,10 @@
 //  Copyright © 2016 Facebook. All rights reserved.
 //
 
-#import <AVKit/AVKit.h>
 #import "RCTVideo.h"
 #import "RCTVideoPlayerViewControllerDelegate.h"
+// ZEROLABS: AVKit moved to end for some reason
+#import <AVKit/AVKit.h>
 
 @interface RCTVideoPlayerViewController : AVPlayerViewController
 @property (nonatomic, weak) id<RCTVideoPlayerViewControllerDelegate> rctDelegate;

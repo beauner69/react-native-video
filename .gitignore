@@ -39,10 +39,10 @@ node_modules/
 yarn.lock
 
 # editor workspace settings
-.vscode
 
 # BUCK
 buck-out/
 \.buckd/
 android/app/libs
 android/keystores/debug.keystore
+.watchmanconfig

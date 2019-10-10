@@ -18,6 +18,8 @@
 @interface RCTVideo : UIView <RCTVideoPlayerViewControllerDelegate>
 #endif
 
+@property (nonatomic, copy) RCTBubblingEventBlock onVideoLoadUpdate; // ZEROLABS
+@property (nonatomic) bool sendLoadUpdate; // ZEROLABS
 @property (nonatomic, copy) RCTBubblingEventBlock onVideoLoadStart;
 @property (nonatomic, copy) RCTBubblingEventBlock onVideoLoad;
 @property (nonatomic, copy) RCTBubblingEventBlock onVideoBuffer;
@@ -40,5 +42,7 @@
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
 
 - (AVPlayerViewController*)createPlayerViewController:(AVPlayer*)player withPlayerItem:(AVPlayerItem*)playerItem;
+
+- (void)performSendLoadUpdate:(NSString *)Map format:(NSString*)format; // ZEROLABS
 
 @end

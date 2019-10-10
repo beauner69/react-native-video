@@ -1,7 +1,8 @@
 #import "RCTVideoManager.h"
 #import "RCTVideo.h"
-#import <React/RCTBridge.h>
+// ZEROLABS: AVFoundation moved up for some reason
 #import <AVFoundation/AVFoundation.h>
+#import <React/RCTBridge.h>
 
 @implementation RCTVideoManager
 
@@ -9,15 +10,21 @@ RCT_EXPORT_MODULE();
 
 @synthesize bridge = _bridge;
 
-- (UIView *)view
+- (UIView *)view 
 {
   return [[RCTVideo alloc] initWithEventDispatcher:self.bridge.eventDispatcher];
 }
 
-- (dispatch_queue_t)methodQueue
+- (dispatch_queue_t)methodQueue 
 {
-    return dispatch_get_main_queue();
+  return dispatch_get_main_queue();
 }
+
+// ZEROLABS begin
+RCT_EXPORT_VIEW_PROPERTY(audioSrc, NSDictionary);
+RCT_EXPORT_VIEW_PROPERTY(sendLoadUpdate, BOOL);
+RCT_EXPORT_VIEW_PROPERTY(onVideoLoadUpdate, RCTBubblingEventBlock);
+// ZEROLABS end
 
 RCT_EXPORT_VIEW_PROPERTY(src, NSDictionary);
 RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString);
@@ -59,7 +66,7 @@ RCT_EXPORT_VIEW_PROPERTY(onPlaybackResume, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onPlaybackRateChange, RCTBubblingEventBlock);
 RCT_EXPORT_VIEW_PROPERTY(onVideoExternalPlaybackChange, RCTBubblingEventBlock);
 
-- (NSDictionary *)constantsToExport
+- (NSDictionary *)constantsToExport 
 {
   return @{
     @"ScaleNone": AVLayerVideoGravityResizeAspect,
@@ -69,9 +76,9 @@ RCT_EXPORT_VIEW_PROPERTY(onVideoExternalPlaybackChange, RCTBubblingEventBlock);
   };
 }
 
-+ (BOOL)requiresMainQueueSetup
++ (BOOL)requiresMainQueueSetup 
 {
-    return YES;
+  return YES;
 }
 
 @end

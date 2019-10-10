@@ -180,7 +180,7 @@ class RCTVideo extends RCTView {
   onEnd = () => {
     this.onProgress();
     this.sendEvent("topVideoEnd", null);
-    this.stopProgressTimer();    
+    this.stopProgressTimer();
   }
 
   onError = error => {

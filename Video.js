@@ -26,17 +26,17 @@ export default class Video extends Component {
   setNativeProps(nativeProps) {
     this._root.setNativeProps(nativeProps);
   }
-  
+
   toTypeString(x) {
     switch (typeof x) {
       case "object":
         return x instanceof Date 
-          ? x.toISOString() 
-          : JSON.stringify(x); // object, null
+          ? x.toISOString()
+           : JSON.stringify(x); // object, null
       case "undefined":
         return "";
       default: // boolean, number, string
-        return x.toString();      
+        return x.toString();
     }
   }
 
@@ -78,6 +78,13 @@ export default class Video extends Component {
   _onLoadStart = (event) => {
     if (this.props.onLoadStart) {
       this.props.onLoadStart(event.nativeEvent);
+    }
+  };
+
+  // ZEROLABS
+  _onLoadUpdate = (event) => {
+    if (this.props.onLoadUpdate) {
+      this.props.onLoadUpdate(event.nativeEvent);
     }
   };
 
@@ -172,7 +179,7 @@ export default class Video extends Component {
       this.props.onPlaybackRateChange(event.nativeEvent);
     }
   };
-  
+
   _onExternalPlaybackChange = (event) => {
     if (this.props.onExternalPlaybackChange) {
       this.props.onExternalPlaybackChange(event.nativeEvent);
@@ -209,6 +216,14 @@ export default class Video extends Component {
     const isNetwork = !!(uri && uri.match(/^https?:/));
     const isAsset = !!(uri && uri.match(/^(assets-library|ipod-library|file|content|ms-appx|ms-appdata):/));
 
+    // ZEROLABS - audioSource url
+    const audioSource = resolveAssetSource(this.props.audioSource) || {};
+    let audioUri = audioSource.uri || '';
+    if (audioUri && audioUri.match(/^\//)) {
+      audioUri = `file://${audioUri}`;
+    }
+    // ZEROLABS END
+
     let nativeResizeMode;
     if (resizeMode === VideoResizeMode.stretch) {
       nativeResizeMode = NativeModules.UIManager.RCTVideo.Constants.ScaleToFill;
@@ -233,6 +248,22 @@ export default class Video extends Component {
         patchVer: source.patchVer || 0,
         requestHeaders: source.headers ? this.stringsOnlyObject(source.headers) : {}
       },
+
+      // ZEROLABS BEGIN
+      audioSrc: {
+        uri: audioUri,
+        isNetwork,
+        isAsset,
+        type: audioSource.type || '',
+        mainVer: audioSource.mainVer || 0,
+        patchVer: audioSource.patchVer || 0,
+        requestHeaders: audioSource.headers
+        ? this.stringsOnlyObject(audioSource.headers)
+        : {},
+      },
+      onVideoLoadUpdate: this._onLoadUpdate,
+      // ZEROLABS END
+
       onVideoLoadStart: this._onLoadStart,
       onVideoLoad: this._onLoad,
       onVideoError: this._onError,
@@ -263,12 +294,12 @@ export default class Video extends Component {
     return (
       <React.Fragment>
         <RCTVideo ref={this._assignRoot} {...nativeProps} />
-        {this.props.poster &&
-          this.state.showPoster && (
-            <View style={nativeProps.style}>
-              <Image style={posterStyle} source={{ uri: this.props.poster }} />
-            </View>
-          )}
+        {this.props.poster && 
+        this.state.showPoster && (
+          <View style={nativeProps.style}>
+            <Image style={posterStyle} source={{ uri: this.props.poster }} />
+          </View>
+        )}
       </React.Fragment>
     );
   }
@@ -278,9 +309,24 @@ Video.propTypes = {
   /* Native only */
   src: PropTypes.object,
   seek: PropTypes.oneOfType([
-    PropTypes.number,
+    PropTypes.number, 
     PropTypes.object
   ]),
+
+  // ZEROLABS BEGIN
+  audioSrc: PropTypes.object,
+  sendLoadUpdate: PropTypes.bool,
+  audioSource: PropTypes.oneOfType([
+    PropTypes.shape({
+      uri: PropTypes.string,
+    }),
+    PropTypes.number
+  ]),
+  onVideoLoadUpdate: PropTypes.func,
+  onLoadUpdate: PropTypes.func,
+  // ZEROLABS END
+
+
   fullscreen: PropTypes.bool,
   onVideoLoadStart: PropTypes.func,
   onVideoLoad: PropTypes.func,
@@ -320,7 +366,7 @@ Video.propTypes = {
   selectedTextTrack: PropTypes.shape({
     type: PropTypes.string.isRequired,
     value: PropTypes.oneOfType([
-      PropTypes.string,
+      PropTypes.string, 
       PropTypes.number
     ])
   }),
@@ -388,6 +434,8 @@ Video.propTypes = {
 const RCTVideo = requireNativeComponent('RCTVideo', Video, {
   nativeOnly: {
     src: true,
+    // ZEROLABS BOOL 1-LINE
+    audioSrc: true,
     seek: true,
     fullscreen: true,
   },
